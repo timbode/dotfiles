@@ -87,10 +87,11 @@ BACKUP="$HOME/.zshrc.bak.$(date +%Y%m%d_%H%M%S)"
 cp ~/.zshrc "$BACKUP"
 echo "Backed up ~/.zshrc → $BACKUP"
 
-# Remove p10k instant-prompt block (top of file, before/after guard)
-_sedi '/# Enable Powerlevel10k instant prompt/,/^fi$/d' ~/.zshrc
-# Remove ZSH_THEME=powerlevel10k line
-_sedi '/ZSH_THEME="powerlevel10k/d' ~/.zshrc
+# Neutralise ZSH_THEME (handles any quote style)
+_sedi 's/ZSH_THEME=.*/ZSH_THEME=""/' ~/.zshrc
+# Disable p10k wizard in case p10k is still on the load path
+grep -q 'POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD' ~/.zshrc || \
+    echo 'POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true' >> ~/.zshrc
 # Remove the [[ ! -f ~/.p10k.zsh ]] || source line
 _sedi '/p10k\.zsh/d' ~/.zshrc
 
