@@ -32,7 +32,7 @@ install_linux() {
 
     if ! command -v starship &>/dev/null; then
         echo "→ installing starship"
-        curl -sS https://starship.rs/install.sh | sh -s -- -y
+        curl -sS https://starship.rs/install.sh | sh -s -- -y --bin-dir ~/.local/bin
     fi
 
     if ! command -v atuin &>/dev/null; then
