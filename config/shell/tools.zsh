@@ -22,6 +22,8 @@ command -v fzf &>/dev/null && source <(fzf --zsh)
 command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
 
 # ── atuin: synced history, rebinds Ctrl-R and Up ─────────────────────────────
+# installer drops the binary in ~/.atuin/bin; source its env to get it into PATH
+[[ -f "$HOME/.atuin/bin/env" ]] && source "$HOME/.atuin/bin/env"
 command -v atuin &>/dev/null && eval "$(atuin init zsh)"
 
 # ── starship: pick palette by machine type ────────────────────────────────────

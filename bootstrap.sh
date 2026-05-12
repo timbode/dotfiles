@@ -92,6 +92,9 @@ _sedi 's/ZSH_THEME=.*/ZSH_THEME=""/' ~/.zshrc
 # Remove direct source lines for p10k (covers both install styles)
 _sedi '/powerlevel10k\/powerlevel10k\.zsh-theme/d' ~/.zshrc
 _sedi '/p10k\.zsh/d' ~/.zshrc
+# Remove atuin init — tools.zsh handles it (avoids double init)
+_sedi '/atuin\/bin\/env/d' ~/.zshrc
+_sedi '/atuin init zsh/d' ~/.zshrc
 # Disable p10k wizard in case p10k is still on the load path
 grep -q 'POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD' ~/.zshrc || \
     echo 'POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true' >> ~/.zshrc
