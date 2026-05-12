@@ -89,11 +89,12 @@ echo "Backed up ~/.zshrc → $BACKUP"
 
 # Neutralise ZSH_THEME (handles any quote style)
 _sedi 's/ZSH_THEME=.*/ZSH_THEME=""/' ~/.zshrc
+# Remove direct source lines for p10k (covers both install styles)
+_sedi '/powerlevel10k\/powerlevel10k\.zsh-theme/d' ~/.zshrc
+_sedi '/p10k\.zsh/d' ~/.zshrc
 # Disable p10k wizard in case p10k is still on the load path
 grep -q 'POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD' ~/.zshrc || \
     echo 'POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true' >> ~/.zshrc
-# Remove the [[ ! -f ~/.p10k.zsh ]] || source line
-_sedi '/p10k\.zsh/d' ~/.zshrc
 
 # Append machine_type + tools source — idempotent
 if ! grep -q 'machine_type.zsh' ~/.zshrc; then
