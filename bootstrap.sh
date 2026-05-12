@@ -20,16 +20,14 @@ _sedi() {
 
 # ── install tools ─────────────────────────────────────────────────────────────
 install_linux() {
-    # Rust toolchain (needed for eza)
-    if ! command -v cargo &>/dev/null; then
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-        # shellcheck disable=SC1091
-        source "$HOME/.cargo/env"
-    fi
-
     if ! command -v eza &>/dev/null; then
         echo "→ installing eza"
-        cargo install eza
+        mkdir -p ~/.local/bin
+        EZA_URL=$(curl -s https://api.github.com/repos/eza-community/eza/releases/latest \
+            | grep "browser_download_url.*eza_x86_64-unknown-linux-gnu.tar.gz\"" \
+            | sed 's/.*"\(https[^"]*\)".*/\1/')
+        curl -fsSL "$EZA_URL" | tar xz -C /tmp
+        mv /tmp/eza ~/.local/bin/eza
     fi
 
     if ! command -v starship &>/dev/null; then
