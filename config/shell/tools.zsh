@@ -1,3 +1,6 @@
+# ~/.local/bin is where Linux binary installers (eza, zoxide, atuin, fzf) land
+[[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
+
 # ── eza ───────────────────────────────────────────────────────────────────────
 export EZA_CONFIG_DIR="$HOME/.config/eza"
 # Explicit EZA_COLORS override: eza theme.yml auto-discovery is unreliable;
