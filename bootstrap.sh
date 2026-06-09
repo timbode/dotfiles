@@ -50,16 +50,24 @@ install_linux() {
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
         ~/.fzf/install --bin   # binary only; tools.zsh handles shell integration
     fi
+
+    if ! command -v brew &>/dev/null; then
+        echo "→ installing Homebrew (Linuxbrew)"
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    fi
+    command -v glab &>/dev/null || brew install glab
 }
 
 install_mac() {
     if ! command -v brew &>/dev/null; then
-        echo "Homebrew not found — install it first: https://brew.sh"
-        exit 1
+        echo "→ installing Homebrew"
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     fi
-    for tool in eza starship atuin zoxide fzf; do
+    for tool in eza starship atuin zoxide fzf glab; do
         command -v "$tool" &>/dev/null || brew install "$tool"
     done
+    brew list --cask font-fira-code-nerd-font &>/dev/null || \
+        brew install --cask font-fira-code-nerd-font
 }
 
 case "$(uname -s)" in

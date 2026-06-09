@@ -11,6 +11,7 @@ Terminal setup for zsh on macOS and Linux. Covers prompt, file listing, history,
 | [atuin](https://atuin.sh) | Synced shell history, replaces Ctrl-R |
 | [fzf](https://github.com/junegunn/fzf) | Fuzzy finder — Ctrl-T (files), Alt-C (cd) |
 | [zoxide](https://github.com/ajeetdsouza/zoxide) | Frecent directory jumps: `z`, `zi` |
+| [glab](https://gitlab.com/gitlab-org/cli) | GitLab CLI |
 
 ## Machine colours
 
@@ -32,7 +33,7 @@ bash bootstrap.sh <mac|server|cluster>
 
 The script will:
 
-1. Install any missing tools (via Homebrew on macOS, Rust/curl installers on Linux)
+1. Install any missing tools (Homebrew is installed automatically if absent; other tools via Homebrew on macOS and Rust/curl installers + Homebrew for glab on Linux)
 2. Symlink `config/` into `~/.config/`
 3. Write `~/.machine_type.zsh` (machine-local, not in this repo)
 4. Patch the existing `~/.zshrc`:
