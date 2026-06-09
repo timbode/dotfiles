@@ -51,11 +51,17 @@ install_linux() {
         ~/.fzf/install --bin   # binary only; tools.zsh handles shell integration
     fi
 
-    if ! command -v brew &>/dev/null; then
-        echo "→ installing Homebrew (Linuxbrew)"
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    if ! command -v glab &>/dev/null; then
+        echo "→ installing glab"
+        GLAB_TAG=$(curl -s "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases" \
+            | grep -o '"tag_name":"[^"]*"' | head -1 | sed 's/"tag_name":"//;s/"//')
+        GLAB_VER="${GLAB_TAG#v}"
+        GLAB_TMP=$(mktemp -d)
+        curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/${GLAB_TAG}/downloads/glab_${GLAB_VER}_linux_amd64.tar.gz" \
+            | tar xz -C "$GLAB_TMP"
+        mv "$GLAB_TMP/bin/glab" ~/.local/bin/glab
+        rm -rf "$GLAB_TMP"
     fi
-    command -v glab &>/dev/null || brew install glab
 }
 
 install_mac() {
