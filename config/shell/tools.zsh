@@ -32,6 +32,7 @@ if command -v starship &>/dev/null; then
     case "${MACHINE_TYPE:-mac}" in
         server)  export STARSHIP_CONFIG="$HOME/.config/starship/server.toml"  ;;
         cluster) export STARSHIP_CONFIG="$HOME/.config/starship/cluster.toml" ;;
+        gpu)     export STARSHIP_CONFIG="$HOME/.config/starship/gpu.toml"     ;;
         *)       export STARSHIP_CONFIG="$HOME/.config/starship/mac.toml"     ;;
     esac
     eval "$(starship init zsh)"

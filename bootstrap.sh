@@ -7,8 +7,8 @@ set -euo pipefail
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ── validate ─────────────────────────────────────────────────────────────────
-if [[ $# -lt 1 || ! "$1" =~ ^(mac|server|cluster)$ ]]; then
-    echo "usage: bash bootstrap.sh <mac|server|cluster>"
+if [[ $# -lt 1 || ! "$1" =~ ^(mac|server|cluster|gpu)$ ]]; then
+    echo "usage: bash bootstrap.sh <mac|server|cluster|gpu>"
     exit 1
 fi
 MACHINE_TYPE="$1"
@@ -47,7 +47,7 @@ install_linux() {
 
     if ! command -v fzf &>/dev/null; then
         echo "→ installing fzf"
-        git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+        [[ ! -d ~/.fzf ]] && git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
         ~/.fzf/install --bin   # binary only; tools.zsh handles shell integration
     fi
 
@@ -87,7 +87,7 @@ mkdir -p ~/.config/{starship,eza,atuin,shell}
 ln -sfn "$DOTFILES/config/shell/tools.zsh"         ~/.config/shell/tools.zsh
 ln -sfn "$DOTFILES/config/eza/theme.yml"            ~/.config/eza/theme.yml
 ln -sfn "$DOTFILES/config/atuin/config.toml"        ~/.config/atuin/config.toml
-for variant in mac server cluster; do
+for variant in mac server cluster gpu; do
     ln -sfn "$DOTFILES/config/starship/$variant.toml" ~/.config/starship/$variant.toml
 done
 
