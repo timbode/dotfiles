@@ -8,12 +8,20 @@ export EZA_CONFIG_DIR="$HOME/.config/eza"
 # also serves as a reliable fallback.
 case "${MACHINE_TYPE:-mac}" in
     gpu)
-        # Deep blue palette matching gpu.toml (color_yellow/aqua/green/red/purple)
+        # Deep blue: dir=#1e88e5 exe=#26a69a ln=#00acc1 (color_yellow/green/aqua)
         export EZA_COLORS="reset:di=1;38;2;30;136;229:ex=1;38;2;38;166;154:ln=1;38;2;0;172;193:pi=38;2;217;119;6:bd=38;2;239;83;80:cd=38;2;239;83;80:so=38;2;121;134;203"
         ;;
+    server)
+        # Teal/green: dir=#689d6a exe=#458588 ln=#98971a (color_yellow/blue/green)
+        export EZA_COLORS="reset:di=1;38;2;104;157;106:ex=1;38;2;69;133;136:ln=1;38;2;152;151;26:pi=38;2;214;93;14:bd=38;2;204;36;29:cd=38;2;204;36;29:so=38;2;177;98;134"
+        ;;
+    cluster)
+        # Magenta-orange: dir=#d65d0e exe=#689d6a ln=#458588 (color_yellow/aqua/blue)
+        export EZA_COLORS="reset:di=1;38;2;214;93;14:ex=1;38;2;104;157;106:ln=1;38;2;69;133;136:pi=38;2;177;98;134:bd=38;2;204;36;29:cd=38;2;204;36;29:so=38;2;177;98;134"
+        ;;
     *)
-        # Warm gruvbox palette matching mac/server/cluster starship configs
-        export EZA_COLORS="reset:di=1;38;2;104;157;106:ex=1;38;2;22;163;74:ln=1;38;2;8;145;178:pi=38;2;217;119;6:bd=38;2;220;38;38:cd=38;2;220;38;38:so=38;2;147;51;234"
+        # Warm amber (mac): dir=#d79921 exe=#98971a ln=#458588 (color_yellow/green/blue)
+        export EZA_COLORS="reset:di=1;38;2;215;153;33:ex=1;38;2;152;151;26:ln=1;38;2;69;133;136:pi=38;2;214;93;14:bd=38;2;204;36;29:cd=38;2;204;36;29:so=38;2;177;98;134"
         ;;
 esac
 
