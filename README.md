@@ -6,40 +6,48 @@ Terminal setup for zsh on macOS and Linux. Covers prompt, file listing, history,
 
 | Tool | Purpose |
 |------|---------|
-| [Starship](https://starship.rs) | Prompt — Gruvbox powerline, machine-specific accent colour |
+| [zsh](https://www.zsh.org) + [oh-my-zsh](https://ohmyz.sh) | Shell and plugin framework |
+| [Starship](https://starship.rs) | Prompt — monochromatic powerline, machine-specific palette |
 | [eza](https://github.com/eza-community/eza) | `ls` replacement with icons and git status |
 | [atuin](https://atuin.sh) | Synced shell history, replaces Ctrl-R |
 | [fzf](https://github.com/junegunn/fzf) | Fuzzy finder — Ctrl-T (files), Alt-C (cd) |
 | [zoxide](https://github.com/ajeetdsouza/zoxide) | Frecent directory jumps: `z`, `zi` |
 | [glab](https://gitlab.com/gitlab-org/cli) | GitLab CLI |
 
-## Machine colours
+## Machine palettes
 
-The first two prompt segments change colour so you know immediately which machine you're on:
+Each machine type gets a fully monochromatic colour palette applied consistently to both the starship prompt and all eza listing columns (headers, dates, sizes, permissions, git status, filenames):
 
-| Machine type | Accent | Directory |
-|---|---|---|
-| `mac` | amber `#d65d0e` | yellow `#d79921` |
-| `server` | teal `#458588` | green `#689d6a` |
-| `cluster` | purple `#b16286` | amber `#d65d0e` |
+| Machine type | Palette | Directory segment | eza directories |
+|---|---|---|---|
+| `mac` | warm amber | `#d79921` golden | `#d79921` |
+| `server` | deep teal | `#0d9488` teal-600 | `#0d9488` |
+| `cluster` | deep violet | `#7c3aed` violet-600 | `#7c3aed` |
+| `gpu` | deep blue | `#1e88e5` blue-600 | `#1e88e5` |
+
+The colour is set once in `MACHINE_TYPE` (written by bootstrap, not in this repo) and picked up by both starship and `EZA_COLORS` at shell startup.
 
 ## Install
 
 ```bash
 git clone https://github.com/YOU/dotfiles ~/dotfiles
 cd ~/dotfiles
-bash bootstrap.sh <mac|server|cluster>
+bash bootstrap.sh <mac|server|cluster|gpu>
 ```
 
 The script will:
 
-1. Install any missing tools (Homebrew is installed automatically if absent; other tools via Homebrew on macOS and Rust/curl installers + Homebrew for glab on Linux)
-2. Symlink `config/` into `~/.config/`
-3. Write `~/.machine_type.zsh` (machine-local, not in this repo)
-4. Patch the existing `~/.zshrc`:
+1. **Linux only:** install zsh via apt-get if missing, install oh-my-zsh if `~/.oh-my-zsh` is absent, and switch the default shell to zsh
+2. **macOS only:** install oh-my-zsh if absent
+3. Install any missing tools (Homebrew + casks on macOS; curl/binary installers on Linux)
+4. Symlink `config/` into `~/.config/`
+5. Write `~/.machine_type.zsh` (machine-local, not in this repo)
+6. Patch the existing `~/.zshrc`:
    - Remove the p10k instant-prompt block, `ZSH_THEME=powerlevel10k/...`, and the `source ~/.p10k.zsh` line
    - Append `source ~/.machine_type.zsh` and `source ~/.config/shell/tools.zsh`
    - Back up the original to `~/.zshrc.bak.TIMESTAMP` first
+
+Re-running on an existing machine is safe — every step is idempotent.
 
 Conda, juliaup, TeX, and any other runtime setup already in `~/.zshrc` are never touched.
 
@@ -92,9 +100,11 @@ These live in the machine's own `~/.zshrc` and are not managed here:
 ```
 bootstrap.sh                  install script
 config/
-  shell/tools.zsh             sourced at the bottom of ~/.zshrc
-  starship/{mac,server,cluster}.toml
-  eza/theme.yml
+  shell/tools.zsh             sourced at the bottom of ~/.zshrc; sets EZA_COLORS per machine
+  starship/{mac,server,cluster,gpu}.toml
+  eza/
+    theme.yml                 minimal shared base (colourful + file_type only)
+    {server,cluster,gpu}.yml  per-machine theme files (symlinking handled by bootstrap)
   atuin/config.toml
 macos/                        macOS-only (Darwin); run from bootstrap.sh
   defaults.sh                 system preferences via `defaults write`
