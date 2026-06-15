@@ -82,7 +82,7 @@ On `mac`, `bootstrap.sh` also applies system preferences via `macos/`:
 Claude); `install_mac` runs `brew bundle` over it. Add a `cask "…"` line and
 re-run to install more.
 
-All three are idempotent and run only on Darwin. Run any standalone, e.g.
+All of these are idempotent and run only on Darwin. Run any standalone, e.g.
 `bash macos/defaults.sh`.
 
 ## What stays machine-local
@@ -114,4 +114,5 @@ macos/                        macOS-only (Darwin); run from bootstrap.sh
   input-sources.sh            ABC (US) + German keyboard layouts
   window-shortcuts.sh         OPT-IN native tiling (not run by bootstrap)
   Brewfile                    GUI apps (casks) installed via `brew bundle`
+  HANDOFF.md                  design rationale + open items
 ```
