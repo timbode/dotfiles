@@ -6,14 +6,13 @@ colourful: true
 filekinds:
   # `normal` (regular files) intentionally omitted so files inherit the
   # terminal's default foreground — readable on both light and dark bgs.
-  directory:    { foreground: "#689d6a", is_bold: true }   # solid blue, ~4.5:1 on any bg
-  symlink:      { foreground: "#0891b2", is_bold: true }   # teal, distinct from dirs
+  # `directory`, `symlink`, `executable` are omitted here so EZA_COLORS
+  # (set per machine type in tools.zsh) controls them.
   pipe:         { foreground: "#d97706" }
   block_device: { foreground: "#dc2626" }
   char_device:  { foreground: "#dc2626" }
   socket:       { foreground: "#9333ea" }
   special:      { foreground: "#9333ea" }
-  executable:   { foreground: "#16a34a", is_bold: true }   # green-600, visible on both
   mount_point:  { foreground: "#0891b2", is_bold: true }
 
 perms:
