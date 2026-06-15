@@ -39,16 +39,16 @@ $time\
 $line_break$character"""
 
 [palettes.gruvbox_cluster]
-color_fg0    = '#fbf1c7'
-color_bg1    = '#3c3836'
-color_bg3    = '#665c54'
-color_blue   = '#458588'
-color_aqua   = '#689d6a'
-color_green  = '#98971a'
-color_orange = '#b16286'
-color_purple = '#b16286'
-color_red    = '#cc241d'
-color_yellow = '#d65d0e'
+color_fg0    = '#ede9fe'   # violet-100  — light lavender text
+color_bg1    = '#0d0618'   # near-black  — time bg
+color_bg3    = '#200c4a'   # dark purple — tool context bg
+color_blue   = '#5b21b6'   # violet-800  — language section bg
+color_aqua   = '#6d28d9'   # violet-700  — git section bg
+color_green  = '#a78bfa'   # violet-400  — success symbol
+color_orange = '#2d1569'   # deep indigo — OS section bg
+color_purple = '#c4b5fd'   # violet-300  — vimcmd symbols
+color_red    = '#f87171'   # red-400     — error
+color_yellow = '#7c3aed'   # violet-600  — directory bg
 
 [os]
 disabled = false
