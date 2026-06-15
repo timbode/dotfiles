@@ -1,76 +1,12 @@
-# Gruvbox palette — matches starship prompt
+# Minimal shared base — all per-machine colours live in EZA_COLORS (tools.zsh).
+# Only file_type and the two filekinds without EZA_COLORS equivalents remain here.
 # Reference: https://github.com/eza-community/eza/blob/main/man/eza_colors-explanation.5.md
 
 colourful: true
 
 filekinds:
-  # `normal` (regular files) intentionally omitted so files inherit the
-  # terminal's default foreground — readable on both light and dark bgs.
-  # `directory`, `symlink`, `executable` are omitted here so EZA_COLORS
-  # (set per machine type in tools.zsh) controls them.
-  pipe:         { foreground: "#d97706" }
-  block_device: { foreground: "#dc2626" }
-  char_device:  { foreground: "#dc2626" }
-  socket:       { foreground: "#9333ea" }
-  special:      { foreground: "#9333ea" }
   mount_point:  { foreground: "#0891b2", is_bold: true }
-
-perms:
-  # user_read intentionally omitted → inherits terminal fg
-  user_write:                          { foreground: "#d97706" }
-  user_execute_file:                   { foreground: "#dc2626" }
-  user_execute_other:                  { foreground: "#dc2626" }
-  user_readwrite_execute_mountpoint:   { foreground: "#0891b2" }
-  group_read:                          { foreground: "#6b7280", is_dimmed: true }
-  group_write:                         { foreground: "#6b7280", is_dimmed: true }
-  group_execute:                       { foreground: "#6b7280", is_dimmed: true }
-  other_read:                          { foreground: "#6b7280", is_dimmed: true }
-  other_write:                         { foreground: "#6b7280", is_dimmed: true }
-  other_execute:                       { foreground: "#6b7280", is_dimmed: true }
-  special_user_file:                   { foreground: "#db2777" }
-  special_other:                       { foreground: "#6b7280", is_dimmed: true }
-  attribute:                           { foreground: "#9ca3af", is_dimmed: true }  # mutes @
-
-size:
-  major:        { foreground: "#6b7280" }
-  minor:        { foreground: "#6b7280" }
-  # number_byte omitted → terminal fg
-  number_kilo:  { foreground: "#16a34a" }
-  number_mega:  { foreground: "#d97706" }
-  number_giga:  { foreground: "#ea580c" }
-  number_huge:  { foreground: "#dc2626" }
-  unit_byte:    { foreground: "#6b7280" }
-  unit_kilo:    { foreground: "#6b7280" }
-  unit_mega:    { foreground: "#6b7280" }
-  unit_giga:    { foreground: "#6b7280" }
-  unit_huge:    { foreground: "#6b7280" }
-
-users:
-  user_you:     { foreground: "#d97706", is_bold: true }
-  user_root:    { foreground: "#dc2626", is_bold: true }
-  user_other:   { foreground: "#6b7280" }
-  group_yours:  { foreground: "#d97706" }
-  group_other:  { foreground: "#6b7280" }
-  group_root:   { foreground: "#dc2626" }
-
-links:
-  normal:          { foreground: "#0891b2" }
-  multi_link_file: { foreground: "#d97706" }
-
-git:
-  new:        { foreground: "#16a34a", is_bold: true }
-  modified:   { foreground: "#d97706" }
-  deleted:    { foreground: "#dc2626" }
-  renamed:    { foreground: "#689d6a" }
-  typechange: { foreground: "#9333ea" }
-  ignored:    { foreground: "#9ca3af", is_dimmed: true }
-  conflicted: { foreground: "#dc2626", is_bold: true }
-
-git_repo:
-  branch_main:  { foreground: "#16a34a" }
-  branch_other: { foreground: "#9333ea" }
-  git_clean:    { foreground: "#16a34a" }
-  git_dirty:    { foreground: "#d97706" }
+  special:      { foreground: "#9333ea" }
 
 file_type:
   image:      { foreground: "#db2777" }
@@ -83,11 +19,3 @@ file_type:
   temp:       { foreground: "#9ca3af", is_dimmed: true }
   compiled:   { foreground: "#d97706" }
   build:      { foreground: "#16a34a" }
-
-punctuation: { foreground: "#9ca3af", is_dimmed: true }
-date:        { foreground: "#689d6a" }
-inode:       { foreground: "#9ca3af", is_dimmed: true }
-blocks:      { foreground: "#6b7280" }
-header:      { foreground: "#d97706", is_bold: true, is_underline: true }
-octal:       { foreground: "#9333ea" }
-flags:       { foreground: "#9333ea" }
