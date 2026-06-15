@@ -3,9 +3,19 @@
 
 # ── eza ───────────────────────────────────────────────────────────────────────
 export EZA_CONFIG_DIR="$HOME/.config/eza"
-# Explicit EZA_COLORS override: eza theme.yml auto-discovery is unreliable;
-# this keeps file-kind colours in sync with config/eza/theme.yml.
-export EZA_COLORS="reset:di=1;38;2;104;157;106:ex=1;38;2;22;163;74:ln=1;38;2;8;145;178:pi=38;2;217;119;6:bd=38;2;220;38;38:cd=38;2;220;38;38:so=38;2;147;51;234"
+# EZA_COLORS per machine type — keeps file-kind colours uniform with the
+# active starship palette. theme.yml auto-discovery is unreliable so this
+# also serves as a reliable fallback.
+case "${MACHINE_TYPE:-mac}" in
+    gpu)
+        # Deep blue palette matching gpu.toml (color_yellow/aqua/green/red/purple)
+        export EZA_COLORS="reset:di=1;38;2;30;136;229:ex=1;38;2;38;166;154:ln=1;38;2;0;172;193:pi=38;2;217;119;6:bd=38;2;239;83;80:cd=38;2;239;83;80:so=38;2;121;134;203"
+        ;;
+    *)
+        # Warm gruvbox palette matching mac/server/cluster starship configs
+        export EZA_COLORS="reset:di=1;38;2;104;157;106:ex=1;38;2;22;163;74:ln=1;38;2;8;145;178:pi=38;2;217;119;6:bd=38;2;220;38;38:cd=38;2;220;38;38:so=38;2;147;51;234"
+        ;;
+esac
 
 if command -v eza &>/dev/null; then
     alias ls="eza --icons --group-directories-first"
