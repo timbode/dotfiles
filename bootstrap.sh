@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Usage: bash bootstrap.sh <mac|server|cluster>
-# Installs tools, symlinks configs, patches existing ~/.zshrc.
+# Usage: bash bootstrap.sh <mac|server|cluster|gpu>
+# Installs zsh + oh-my-zsh (if absent), then tools, symlinks configs, patches ~/.zshrc.
+# Idempotent: safe to re-run on machines where bootstrap already ran.
 # Never touches conda / juliaup / TeX blocks — only removes p10k and appends 2 lines.
 set -euo pipefail
 
@@ -20,6 +21,27 @@ _sedi() {
 
 # ── install tools ─────────────────────────────────────────────────────────────
 install_linux() {
+    # ── zsh ──────────────────────────────────────────────────────────────────
+    if ! command -v zsh &>/dev/null; then
+        echo "→ installing zsh"
+        sudo apt-get update -qq && sudo apt-get install -y zsh
+    fi
+
+    # ── oh-my-zsh ─────────────────────────────────────────────────────────────
+    # RUNZSH=no  → don't exec zsh when done; CHSH=no → we handle chsh ourselves
+    if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+        echo "→ installing oh-my-zsh"
+        RUNZSH=no CHSH=no \
+            sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    fi
+
+    # ── default shell ─────────────────────────────────────────────────────────
+    if [[ "$(basename "$SHELL")" != "zsh" ]]; then
+        echo "→ setting default shell to zsh"
+        chsh -s "$(command -v zsh)" || \
+            echo "  chsh failed — run manually: chsh -s $(command -v zsh)"
+    fi
+
     if ! command -v eza &>/dev/null; then
         echo "→ installing eza"
         mkdir -p ~/.local/bin
@@ -65,6 +87,13 @@ install_linux() {
 }
 
 install_mac() {
+    # ── oh-my-zsh (macOS ships with zsh already) ──────────────────────────────
+    if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+        echo "→ installing oh-my-zsh"
+        RUNZSH=no CHSH=no \
+            sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    fi
+
     if ! command -v brew &>/dev/null; then
         echo "→ installing Homebrew"
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -80,6 +109,12 @@ case "$(uname -s)" in
     Darwin) install_mac  ;;
     Linux)  install_linux ;;
 esac
+
+# ── macOS system settings (Darwin only) ───────────────────────────────────────
+if [[ $(uname -s) == Darwin ]]; then
+    bash "$DOTFILES/macos/defaults.sh"
+    bash "$DOTFILES/macos/keyremap.sh"
+fi
 
 # ── symlink configs ───────────────────────────────────────────────────────────
 mkdir -p ~/.config/{starship,eza,atuin,shell}
