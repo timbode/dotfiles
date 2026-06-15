@@ -43,6 +43,40 @@ The script will:
 
 Conda, juliaup, TeX, and any other runtime setup already in `~/.zshrc` are never touched.
 
+## macOS system settings
+
+On `mac`, `bootstrap.sh` also applies system preferences via `macos/`:
+
+- `macos/defaults.sh` — keyboard (smart-text substitutions off), trackpad
+  (tap-to-click on, three-finger-drag off, secondary click on), reversed
+  (non-natural) scrolling. Captured from the reference Mac; an `OPTIONAL`
+  block at the bottom holds opt-in extras (key-repeat speed, Finder/Dock
+  tweaks, screenshots folder) — uncomment to enable.
+- `macos/keyremap.sh` + `com.dotfiles.keyremap.plist` — swaps **Left Control
+  ↔ Globe/Fn**. Applied immediately with `hidutil`, then persisted across
+  reboots by a LaunchAgent (`com.dotfiles.keyremap`). Edit the plist's JSON to
+  remap other keys.
+
+- `macos/rectangle.sh` + `rectangle.plist` — restores [Rectangle](https://rectangleapp.com)
+  settings (alternate shortcut set, size **cycling** on repeated presses, Todo
+  mode). Rectangle stays the window manager because native tiling can't move
+  windows **across displays** or cycle sizes. `bootstrap.sh` imports the plist
+  and relaunches Rectangle (first launch needs Accessibility permission, granted
+  manually). Re-capture after changes: `defaults export com.knollsoft.Rectangle macos/rectangle.plist && plutil -convert xml1 macos/rectangle.plist`.
+- `macos/input-sources.sh` — enables **ABC (US) + German** keyboard layouts.
+  Takes effect after a logout.
+- `macos/window-shortcuts.sh` — **opt-in alternative**, NOT run by bootstrap.
+  Maps Ctrl+Option+Arrows onto native `Window ▸ Move & Resize` halves. Only for
+  going Rectangle-free; it has no cross-display or cycling support and would
+  collide with Rectangle's shortcuts. Run by hand: `bash macos/window-shortcuts.sh`.
+
+`macos/Brewfile` lists GUI apps (VS Code, iTerm2, Rectangle, Firefox, Logseq,
+Claude); `install_mac` runs `brew bundle` over it. Add a `cask "…"` line and
+re-run to install more.
+
+All three are idempotent and run only on Darwin. Run any standalone, e.g.
+`bash macos/defaults.sh`.
+
 ## What stays machine-local
 
 These live in the machine's own `~/.zshrc` and are not managed here:
@@ -62,4 +96,12 @@ config/
   starship/{mac,server,cluster}.toml
   eza/theme.yml
   atuin/config.toml
+macos/                        macOS-only (Darwin); run from bootstrap.sh
+  defaults.sh                 system preferences via `defaults write`
+  keyremap.sh                 Left Control <-> Globe/Fn swap (hidutil)
+  com.dotfiles.keyremap.plist LaunchAgent that persists the swap
+  rectangle.sh + rectangle.plist  restore Rectangle window-manager settings
+  input-sources.sh            ABC (US) + German keyboard layouts
+  window-shortcuts.sh         OPT-IN native tiling (not run by bootstrap)
+  Brewfile                    GUI apps (casks) installed via `brew bundle`
 ```

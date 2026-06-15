@@ -98,11 +98,20 @@ install_mac() {
         echo "→ installing Homebrew"
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     fi
+    # Put brew on PATH for THIS script run (fresh installs aren't on PATH yet —
+    # .zprofile only adds it for new shells). Covers Apple Silicon + Intel paths.
+    if ! command -v brew &>/dev/null; then
+        for p in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+            [[ -x "$p" ]] && eval "$("$p" shellenv)" && break
+        done
+    fi
     for tool in eza starship atuin zoxide fzf glab; do
         command -v "$tool" &>/dev/null || brew install "$tool"
     done
     brew list --cask font-fira-code-nerd-font &>/dev/null || \
         brew install --cask font-fira-code-nerd-font
+    # GUI apps (idempotent: skips anything already installed)
+    brew bundle --file="$DOTFILES/macos/Brewfile"
 }
 
 case "$(uname -s)" in
@@ -114,6 +123,10 @@ esac
 if [[ $(uname -s) == Darwin ]]; then
     bash "$DOTFILES/macos/defaults.sh"
     bash "$DOTFILES/macos/keyremap.sh"
+    bash "$DOTFILES/macos/rectangle.sh"
+    bash "$DOTFILES/macos/input-sources.sh"
+    # window-shortcuts.sh (native tiling) is intentionally NOT run here — it would
+    # collide with Rectangle. Run it by hand only if you go Rectangle-free.
 fi
 
 # ── symlink configs ───────────────────────────────────────────────────────────
