@@ -90,6 +90,10 @@ ln -sfn "$DOTFILES/config/atuin/config.toml"        ~/.config/atuin/config.toml
 for variant in mac server cluster gpu; do
     ln -sfn "$DOTFILES/config/starship/$variant.toml" ~/.config/starship/$variant.toml
 done
+for variant in server cluster gpu; do
+    mkdir -p ~/.config/eza/$variant
+    ln -sfn "$DOTFILES/config/eza/$variant.yml" ~/.config/eza/$variant/theme.yml
+done
 
 # ── write machine type (machine-local, not in repo) ───────────────────────────
 echo "export MACHINE_TYPE=\"$MACHINE_TYPE\"" > ~/.machine_type.zsh
