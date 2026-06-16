@@ -120,12 +120,13 @@ case "$(uname -s)" in
 esac
 
 # ── macOS system settings (Darwin only) ───────────────────────────────────────
+# Each step is independent — guard every call so one failure can't abort the
+# rest (bootstrap runs under `set -e`; an unguarded non-zero exit here would
+# skip every later step, e.g. a broken dock.sh silently dropping keyremap.sh).
 if [[ $(uname -s) == Darwin ]]; then
-    bash "$DOTFILES/macos/defaults.sh"
-    bash "$DOTFILES/macos/dock.sh"
-    bash "$DOTFILES/macos/keyremap.sh"
-    bash "$DOTFILES/macos/rectangle.sh"
-    bash "$DOTFILES/macos/input-sources.sh"
+    for script in defaults dock keyremap rectangle input-sources; do
+        bash "$DOTFILES/macos/$script.sh" || echo "  ⚠ macos/$script.sh failed — continuing"
+    done
     # window-shortcuts.sh (native tiling) is intentionally NOT run here — it would
     # collide with Rectangle. Run it by hand only if you go Rectangle-free.
 fi
