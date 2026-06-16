@@ -30,39 +30,52 @@ if ! command -v dockutil &>/dev/null; then
     exit 0
 fi
 
-# Wipe the Dock, then re-add each tile in order. --no-restart batches the writes
-# so the Dock only restarts once, at the end.
-dockutil --no-restart --remove all >/dev/null
+# Desired tiles, left-to-right. System apps live under /System/Applications;
+# third-party and the Safari web app only exist on some machines.
+CANDIDATES=(
+    "/System/Applications/Apps.app"            # macOS Apps launcher (macOS 15+)
+    "/Applications/Safari.app"
+    "/Applications/Firefox.app"
+    "/System/Applications/Messages.app"
+    "/System/Applications/Mail.app"
+    "/System/Applications/Photos.app"
+    "/System/Applications/FaceTime.app"
+    "/System/Applications/Phone.app"
+    "/System/Applications/Calendar.app"
+    "/System/Applications/System Settings.app"
+    "$HOME/Applications/CRM - Aufgaben.app"    # Safari web app (this machine)
+    "/Applications/Microsoft Teams.app"
+)
 
-# Add an app tile if its .app exists; otherwise note the skip and move on.
-add_app() {
-    local path="$1"
-    if [[ -d "$path" ]]; then
-        dockutil --no-restart --add "$path" >/dev/null
-    else
-        echo "  • skipping (not installed): $(basename "$path" .app)"
-    fi
-}
+# Keep only the apps that actually exist on this machine.
+apps=()
+for path in "${CANDIDATES[@]}"; do
+    if [[ -d "$path" ]]; then apps+=("$path")
+    else echo "  • skipping (not installed): $(basename "$path" .app)"; fi
+done
 
-# Left-to-right order. System apps live under /System/Applications; third-party
-# and the Safari web app are guarded by the existence check in add_app.
-add_app "/System/Applications/Apps.app"            # macOS Apps launcher
-add_app "/Applications/Safari.app"
-add_app "/Applications/Firefox.app"
-add_app "/System/Applications/Messages.app"
-add_app "/System/Applications/Mail.app"
-add_app "/System/Applications/Photos.app"
-add_app "/System/Applications/FaceTime.app"
-add_app "/System/Applications/Phone.app"
-add_app "/System/Applications/Calendar.app"
-add_app "/System/Applications/System Settings.app"
-add_app "$HOME/Applications/CRM - Aufgaben.app"    # Safari web app (this machine)
-add_app "/Applications/Microsoft Teams.app"
+# Safety net: never wipe the Dock unless we have something to put back, so a
+# path mismatch can't strand you with an empty Dock.
+if (( ${#apps[@]} == 0 )); then
+    echo "  no known apps found here — leaving the existing Dock untouched"
+    killall Dock 2>/dev/null || true
+    echo "  ✓ Dock behaviour applied (layout left as-is)"
+    exit 0
+fi
+
+# Rebuild: wipe, then re-add. Individual dockutil failures are non-fatal — a
+# single bad tile must never abort the script and leave the Dock empty.
+# --no-restart batches the writes so the Dock only restarts once, at the end.
+dockutil --no-restart --remove all >/dev/null 2>&1 || true
+for path in "${apps[@]}"; do
+    dockutil --no-restart --add "$path" >/dev/null 2>&1 \
+        || echo "  • could not add: $(basename "$path" .app)"
+done
 
 # Downloads stack on the right: fan view, sorted by date added, stack icon.
 if [[ -d "$HOME/Downloads" ]]; then
     dockutil --no-restart --add "$HOME/Downloads" \
-        --view fan --display stack --sort dateadded >/dev/null
+        --view fan --display stack --sort dateadded >/dev/null 2>&1 || true
 fi
 
 killall Dock 2>/dev/null || true
