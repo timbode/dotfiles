@@ -122,6 +122,7 @@ esac
 # ── macOS system settings (Darwin only) ───────────────────────────────────────
 if [[ $(uname -s) == Darwin ]]; then
     bash "$DOTFILES/macos/defaults.sh"
+    bash "$DOTFILES/macos/dock.sh"
     bash "$DOTFILES/macos/keyremap.sh"
     bash "$DOTFILES/macos/rectangle.sh"
     bash "$DOTFILES/macos/input-sources.sh"

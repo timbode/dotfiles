@@ -57,10 +57,7 @@ echo "  ✓ defaults applied (a logout fully settles a few keyboard toggles)"
 # # Don't scatter .DS_Store on network/USB volumes
 # defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
 # defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
-# # Dock: auto-hide, 48px icons, no recent-apps section
-# defaults write com.apple.dock autohide -bool true
-# defaults write com.apple.dock tilesize -int 48
-# defaults write com.apple.dock show-recents -bool false
+# # Dock behaviour + pinned layout now live in macos/dock.sh (run from bootstrap).
 # # Screenshots to ~/Screenshots as PNG
 # mkdir -p "$HOME/Screenshots"
 # defaults write com.apple.screencapture location -string "$HOME/Screenshots"

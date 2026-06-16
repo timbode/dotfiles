@@ -58,8 +58,14 @@ On `mac`, `bootstrap.sh` also applies system preferences via `macos/`:
 - `macos/defaults.sh` — keyboard (smart-text substitutions off), trackpad
   (tap-to-click on, three-finger-drag off, secondary click on), reversed
   (non-natural) scrolling. Captured from the reference Mac; an `OPTIONAL`
-  block at the bottom holds opt-in extras (key-repeat speed, Finder/Dock
+  block at the bottom holds opt-in extras (key-repeat speed, Finder
   tweaks, screenshots folder) — uncomment to enable.
+- `macos/dock.sh` — Dock **behaviour** (auto-hide on, magnification on,
+  38px icons / 93px magnified, recents shown, bottom-right hot corner →
+  Quick Note) plus the **pinned-app layout**, rebuilt with `dockutil`. Apps
+  that aren't installed are skipped, so third-party/web-app tiles appear only
+  once their `.app` exists. Re-capture the knobs from `defaults read
+  com.apple.dock`; edit the `add_app` list to change pinned apps.
 - `macos/keyremap.sh` + `com.dotfiles.keyremap.plist` — swaps **Left Control
   ↔ Globe/Fn**. Applied immediately with `hidutil`, then persisted across
   reboots by a LaunchAgent (`com.dotfiles.keyremap`). Edit the plist's JSON to
@@ -79,8 +85,8 @@ On `mac`, `bootstrap.sh` also applies system preferences via `macos/`:
   collide with Rectangle's shortcuts. Run by hand: `bash macos/window-shortcuts.sh`.
 
 `macos/Brewfile` lists GUI apps (VS Code, iTerm2, Rectangle, Firefox, Logseq,
-Claude); `install_mac` runs `brew bundle` over it. Add a `cask "…"` line and
-re-run to install more.
+Claude) plus the `dockutil` CLI used by `dock.sh`; `install_mac` runs `brew
+bundle` over it. Add a `cask "…"` (or `brew "…"`) line and re-run to install more.
 
 All of these are idempotent and run only on Darwin. Run any standalone, e.g.
 `bash macos/defaults.sh`.
@@ -108,6 +114,7 @@ config/
   atuin/config.toml
 macos/                        macOS-only (Darwin); run from bootstrap.sh
   defaults.sh                 system preferences via `defaults write`
+  dock.sh                     Dock behaviour + pinned-app layout (dockutil)
   keyremap.sh                 Left Control <-> Globe/Fn swap (hidutil)
   com.dotfiles.keyremap.plist LaunchAgent that persists the swap
   rectangle.sh + rectangle.plist  restore Rectangle window-manager settings
