@@ -14,6 +14,7 @@ Setting up a freshly repaired Mac from scratch. Extend the existing dotfiles rep
 | File | Purpose |
 |------|---------|
 | `defaults.sh` | Keyboard (smart-text OFF), trackpad (tap-to-click ON, 3-finger-drag OFF, secondary click ON), reversed scroll. Opt-in extras commented at bottom. |
+| `dock.sh` | Dock behaviour (autohide, magnification, tile/large size, recents, bottom-right Quick Note hot corner) + pinned-app layout rebuilt with `dockutil`. |
 | `keyremap.sh` + `com.dotfiles.keyremap.plist` | Swap **Left Control ↔ Globe/Fn** via `hidutil`, persisted by a LaunchAgent (`com.dotfiles.keyremap`). |
 | `rectangle.sh` + `rectangle.plist` | Restore Rectangle window-manager config via `defaults import`. |
 | `input-sources.sh` | Enable **ABC (US) + German** keyboard layouts. |
@@ -21,7 +22,8 @@ Setting up a freshly repaired Mac from scratch. Extend the existing dotfiles rep
 | `Brewfile` | GUI casks: vscode, iterm2, rectangle, firefox, logseq, claude. |
 
 `bootstrap.sh` wiring: `install_mac` runs `brew bundle`; a Darwin block runs
-`defaults.sh → keyremap.sh → rectangle.sh → input-sources.sh`.
+`defaults.sh → dock.sh → keyremap.sh → rectangle.sh → input-sources.sh`, each
+call **guarded with `|| echo … continuing`** (see the cascade note below).
 
 ## Key decisions & rationale
 
@@ -44,12 +46,44 @@ Setting up a freshly repaired Mac from scratch. Extend the existing dotfiles rep
   rest of the script run; `install_mac` now `eval`s `brew shellenv`
   (`/opt/homebrew` or `/usr/local`).
 
+## The `set -e` cascade (live incident — read before editing the Darwin block)
+
+**Symptom:** on one Mac, running bootstrap left the Dock with *no apps* **and**
+the Globe↔Control key swap silently didn't apply. Two unrelated-looking failures,
+one cause.
+
+**Mechanism:**
+
+1. `dock.sh` did `dockutil --remove all` (wiping the Dock) and then re-added apps
+   one by one. It ran under `set -euo pipefail`, so when a single `dockutil --add`
+   returned non-zero, the script **aborted right after the wipe** → empty Dock.
+2. `bootstrap.sh` *also* runs under `set -e`, and the Darwin block called each
+   step unguarded (`bash macos/dock.sh`). `dock.sh`'s non-zero exit therefore
+   **aborted the entire bootstrap run** — so `keyremap.sh`, `rectangle.sh`, and
+   `input-sources.sh` never executed. That's why the key swap "didn't work": it
+   was never reached.
+
+**The two-layer rule this leaves us with:**
+
+- *Inside* a step script: never do a destructive op (wipe/remove) before the
+  rebuild under bare `set -e`. Build the desired list first, only mutate if it's
+  non-empty, and make each external-tool call non-fatal (`|| …`). `dock.sh` now
+  does exactly this — it won't wipe unless it has apps to re-add.
+- *In `bootstrap.sh`*: every `macos/*.sh` call is guarded
+  (`bash … || echo "⚠ … continuing"`) so one step failing logs a warning and the
+  rest still run. One broken script must never take out the others.
+
+**Fixed in:** `dock.sh` hardening + `bootstrap.sh` guarded loop (commits
+`cd288fd`, `0ffd0e5`). Don't reintroduce an unguarded call here.
+
 ## Verified vs NOT verified
 
 - ✅ All `*.sh` pass `bash -n`; both `*.plist` pass `plutil -lint`; all 6 cask
   names resolve via `brew info --cask`.
-- ⚠️ **Nothing has been applied to any machine and nothing run end-to-end.** This
-  has not been exercised on a real fresh Mac.
+- ✅ **Now exercised end-to-end on real Macs.** `defaults.sh`, `dock.sh`, and
+  `keyremap.sh` confirmed working (Dock rebuilds; Globe↔Control swap applies live
+  and persists via the LaunchAgent). The `set -e` cascade above was found and
+  fixed during this run.
 - ⚠️ `window-shortcuts.sh` menu-item titles ("Left/Right/Top/Bottom") are
   **unverified on macOS 26 Tahoe**. If used, confirm against the actual
   `Window ▸ Move & Resize` menu and adjust. (Opt-in only, so low risk.)
