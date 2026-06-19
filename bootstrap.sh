@@ -20,6 +20,39 @@ _sedi() {
 }
 
 # ── install tools ─────────────────────────────────────────────────────────────
+_install_fonts_linux() {
+    if ! command -v fc-cache &>/dev/null; then
+        echo "  ⚠ fontconfig not found — skipping font install (install fontconfig and re-run)"
+        return
+    fi
+    local font_dir="$HOME/.local/share/fonts"
+    mkdir -p "$font_dir"
+    local tmp url
+    if ! fc-list | grep -qi "Fira Code"; then
+        echo "→ installing Fira Code"
+        tmp=$(mktemp -d)
+        url=$(curl -s https://api.github.com/repos/tonsky/FiraCode/releases/latest \
+            | grep "browser_download_url" | grep "\.zip" \
+            | sed 's/.*"\(https[^"]*\)".*/\1/' | head -1)
+        curl -fsSL "$url" -o "$tmp/firacode.zip"
+        unzip -q "$tmp/firacode.zip" "ttf/*.ttf" -d "$tmp"
+        mv "$tmp/ttf/"*.ttf "$font_dir/"
+        rm -rf "$tmp"
+    fi
+    if ! fc-list | grep -qi "Fira Sans"; then
+        echo "→ installing Fira Sans"
+        tmp=$(mktemp -d)
+        url=$(curl -s https://api.github.com/repos/mozilla/Fira/releases/latest \
+            | grep "browser_download_url" | grep "\.zip" \
+            | sed 's/.*"\(https[^"]*\)".*/\1/' | head -1)
+        curl -fsSL "$url" -o "$tmp/firasans.zip"
+        unzip -q "$tmp/firasans.zip" "*/otf/FiraSans*.otf" -d "$tmp"
+        find "$tmp" -name "FiraSans*.otf" -exec mv {} "$font_dir/" \;
+        rm -rf "$tmp"
+    fi
+    fc-cache -f "$font_dir"
+}
+
 install_linux() {
     # ── zsh ──────────────────────────────────────────────────────────────────
     if ! command -v zsh &>/dev/null; then
@@ -84,6 +117,8 @@ install_linux() {
         mv "$GLAB_TMP/bin/glab" ~/.local/bin/glab
         rm -rf "$GLAB_TMP"
     fi
+
+    _install_fonts_linux
 }
 
 install_mac() {
@@ -108,8 +143,9 @@ install_mac() {
     for tool in eza starship atuin zoxide fzf glab; do
         command -v "$tool" &>/dev/null || brew install "$tool"
     done
-    brew list --cask font-fira-code-nerd-font &>/dev/null || \
-        brew install --cask font-fira-code-nerd-font
+    for cask in font-fira-code-nerd-font font-fira-code font-fira-sans; do
+        brew list --cask "$cask" &>/dev/null || brew install --cask "$cask"
+    done
     # GUI apps (idempotent: skips anything already installed)
     brew bundle --file="$DOTFILES/macos/Brewfile"
 }
