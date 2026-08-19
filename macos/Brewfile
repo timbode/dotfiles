@@ -2,6 +2,7 @@
 # Add a line and re-run `bash bootstrap.sh mac` to install more.
 # Find a cask name with:  brew search --cask <name>
 brew "dockutil"          # used by macos/dock.sh to rebuild the Dock layout
+brew "btop"              # terminal resource monitor
 cask "visual-studio-code"
 cask "iterm2"
 cask "rectangle"

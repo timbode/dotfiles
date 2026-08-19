@@ -85,8 +85,9 @@ On `mac`, `bootstrap.sh` also applies system preferences via `macos/`:
   collide with Rectangle's shortcuts. Run by hand: `bash macos/window-shortcuts.sh`.
 
 `macos/Brewfile` lists GUI apps (VS Code, iTerm2, Rectangle, Firefox, Logseq,
-Claude) plus the `dockutil` CLI used by `dock.sh`; `install_mac` runs `brew
-bundle` over it. Add a `cask "…"` (or `brew "…"`) line and re-run to install more.
+Claude) plus CLI formulas (`dockutil` used by `dock.sh`, `btop`); `install_mac`
+runs `brew bundle` over it. Add a `cask "…"` (or `brew "…"`) line and re-run to
+install more.
 
 All of these are idempotent and run only on Darwin. Run any standalone, e.g.
 `bash macos/defaults.sh`.
