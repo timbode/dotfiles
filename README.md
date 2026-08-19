@@ -37,7 +37,7 @@ bash bootstrap.sh <mac|server|cluster|gpu>
 
 The script will:
 
-1. **Linux only:** install zsh via apt-get if missing, install oh-my-zsh if `~/.oh-my-zsh` is absent, and switch the default shell to zsh
+1. **Linux only:** install zsh and btop via apt-get if missing, install oh-my-zsh if `~/.oh-my-zsh` is absent, and switch the default shell to zsh
 2. **macOS only:** install oh-my-zsh if absent
 3. Install any missing tools (Homebrew + casks on macOS; curl/binary installers on Linux)
 4. Symlink `config/` into `~/.config/`

@@ -60,6 +60,12 @@ install_linux() {
         sudo apt-get update -qq && sudo apt-get install -y zsh
     fi
 
+    # ── btop ─────────────────────────────────────────────────────────────────
+    if ! command -v btop &>/dev/null; then
+        echo "→ installing btop"
+        sudo apt-get update -qq && sudo apt-get install -y btop
+    fi
+
     # ── oh-my-zsh ─────────────────────────────────────────────────────────────
     # RUNZSH=no  → don't exec zsh when done; CHSH=no → we handle chsh ourselves
     if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
