@@ -3,10 +3,11 @@
 Working notes for whoever (human or agent) picks this up later: what was set up,
 why it is shaped this way, and where the sharp edges are.
 
-> **Not wired into `bootstrap.sh`.** Unlike `starship`/`eza`/`atuin`, nothing in
-> this directory is symlinked into `~/.config/`. The live files listed below are
-> real files on each machine, created by hand. Running `bootstrap.sh` does **not**
-> install or configure herdr. Wiring it in is an open option, not a done thing.
+> **Partly wired into `bootstrap.sh`.** The helper scripts below now live in
+> `dotfiles/bin/` and are symlinked into `~/.local/bin/` by `bootstrap.sh`, so they
+> reach every machine and survive a wipe. Herdr's own config files
+> (`~/.config/herdr/config.toml`, here and on each remote) are still real files
+> written by hand — `bootstrap.sh` does not install or configure herdr itself.
 
 ## What herdr is used for here
 
@@ -48,7 +49,7 @@ protocol is versioned.
 
 Layout in use: **one workspace per machine** — `Mac` (local, rooted at `~`, never
 attached to anything) plus one per remote host, each holding a single pane
-running `herdr --remote <host>`. `ctrl+b w` (workspace picker) switches between
+running `herdr-reconnect <host>` (which supervises `herdr --remote <host>`). `ctrl+b w` (workspace picker) switches between
 them.
 
 Only workspaces appear in the spaces sidebar; tabs do not. That is why the layout
@@ -92,7 +93,7 @@ them — the remote server must be restarted to pick them up. Restarting a remot
 server **kills its pane processes**, so check what is running there first
 (`herdr pane list` on that host).
 
-## Scripts — `~/.local/bin/`
+## Scripts — `dotfiles/bin/`, symlinked into `~/.local/bin/`
 
 ### `herdr-remotes`
 
@@ -122,9 +123,34 @@ would take down three hosts.
 **Disconnecting is not stopping.** It kills only the local viewer process; the
 remote server and everything running on it continue.
 
+**Panes run `herdr-reconnect <host>`, not `herdr --remote` directly**, so a
+dropped link reattaches itself. Disconnecting therefore kills the supervisor
+first and the client second — killing the client alone just makes the supervisor
+reattach. A pane counts as connected while its supervisor lives, including
+mid-backoff, so re-running the script never stacks two supervisors on one pane.
+
 **Why it exists:** after a reboot, launchd restarts the server and herdr restores
 the workspace *shape* — but not the processes that were running in the panes. The
 panes come back as idle shells. This script reconnects them.
+
+### `herdr-reconnect`
+
+`herdr-reconnect <host>` re-execs `herdr --remote <host>` whenever it exits
+non-zero, backing off 1s → 30s. A clean exit (detaching from the inner session on
+purpose) ends the loop.
+
+It exists because a dropped bridge is the one moment this setup feels worse than
+plain SSH tabs, even though it is strictly better: the remote server owns the
+panes and keeps running, so nothing is lost — but without a supervisor you are
+left with a dead pane and a command to retype.
+
+Do **not** try to prevent the drop by adding `ServerAliveInterval` to
+`~/.ssh/config`. Herdr writes its own ssh config (`src/remote/attach.rs:1795`)
+that `Include`s yours and then appends `ServerAliveInterval 15` /
+`ServerAliveCountMax 4`. Since the include comes first and ssh is
+first-match-wins, a value in `~/.ssh/config` **overrides** herdr's and makes drop
+detection slower. Sixty-second detection is already the intended behaviour; the
+supervisor handles what follows.
 
 ### `herdr-agents`
 
@@ -136,6 +162,19 @@ per-server.
 > **Untested path:** only the empty-agent-list case has been exercised. The
 > formatting for a *populated* list has never actually run. If a column looks
 > wrong the first time a real agent shows up, that is why.
+
+### `dot-status`
+
+Not herdr-specific, but the tool that keeps this setup honest across machines:
+`dot-status` reports, for `~/dotclaude` and `~/dotfiles` on every host, how far
+each is from `origin/main`, whether its working-tree changes are real or just
+Claude Code rewriting `settings.json`, and whether the installers' symlinks are
+actually in place. `--suggest` prints (never runs) the reconciling commands,
+bundled one ssh per machine.
+
+The symlink check is the part that matters here: `git pull` updates a checkout
+but does not run `install.sh` or `bootstrap.sh`, so a commit that adds a new file
+leaves a machine holding content with nothing pointing at it.
 
 ## Costs (measured, idle)
 
@@ -193,6 +232,18 @@ knowing given the panes hold coding agents.
   which execs the absolute path (`src/remote/attach.rs:779` probes
   `$HOME/.local/bin/herdr`). But a bare `herdr` typed in a plain SSH session on
   those hosts will not resolve — relevant for the phone/SSH workflow.
+- **A new tab opens on the Mac, not on the workspace's machine.** Each remote
+  workspace is a *local* workspace whose pane happens to render a remote UI, so
+  the outer herdr catches `ctrl+b c` and makes a local tab. Use the doubled
+  prefix — `ctrl+b` `ctrl+b` `c` — which sends a literal prefix through to the
+  inner session (`src/config/keybinds.rs:1029`). `--remote-keybindings server`
+  does *not* help: it only selects which keymap file the remote client reads, not
+  which herdr receives the keystroke.
+- **atuin rewrites `~/.claude/settings.json`.** Installing or updating atuin adds
+  its `PostToolUse`/`PostToolUseFailure` hooks and re-serialises the file with
+  keys sorted alphabetically. The diff looks alarming — whole blocks appear to
+  move or vanish — but the content is preserved; compare semantically rather than
+  by eye before concluding a guard was dropped.
 - **Only workspaces appear in the spaces sidebar**, not tabs. Adding a tab for a
   machine will not make it show up in that list; it needs a workspace.
 - **The daemon inherits launchd's `PATH`, not the login shell's.** It runs with
@@ -217,8 +268,7 @@ knowing given the panes hold coding agents.
 Installed (`herdr integration install claude`, integration v8). It writes
 `~/.claude/hooks/herdr-agent-state.sh` and adds a `SessionStart` hook entry to
 `~/.claude/settings.json` — both of which are symlinks into `~/dotclaude`, so the
-change lands in that repo, not this one. Committed there on branch
-`herdr/claude-integration`.
+change lands in that repo, not this one, where it is now on `main`.
 
 What it provides is **native session restore only**: the hook reports Claude
 Code's session identity to the local herdr socket, letting herdr reattach a Claude
