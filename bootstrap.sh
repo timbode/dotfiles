@@ -58,6 +58,21 @@ _install_fonts_linux() {
 }
 
 install_linux() {
+    # Every guard below is `command -v <tool>`, but bootstrap runs
+    # non-interactively, where .zshrc -- and so tools.zsh, which is what puts
+    # ~/.local/bin on PATH -- never loads. So every check failed and every tool
+    # was redownloaded and reinstalled on each run, however many times it had
+    # already been installed.
+    #
+    # That was not merely wasteful: re-running atuin's installer re-registers its
+    # Claude Code hooks into ~/.claude/settings.json, which is a symlink into
+    # dotclaude, so a routine bootstrap silently added tracked-config changes and
+    # put a second hook alongside the git-push guard on every Bash call.
+    # Three prefixes, because the installers disagree: ~/.local/bin for the
+    # ones bootstrap places by hand, ~/.atuin/bin and ~/.fzf/bin for the two
+    # that insist on their own home.
+    export PATH="$HOME/.local/bin:$HOME/.atuin/bin:$HOME/.fzf/bin:$PATH"
+
     # ── zsh ──────────────────────────────────────────────────────────────────
     if ! command -v zsh &>/dev/null; then
         echo "→ installing zsh"
