@@ -1,0 +1,28 @@
+#!/bin/sh
+# Cross-machine agent rollup. Herdr's sidebar is per-server, so this is the
+# one view it does not give you: every agent on every host, in one list.
+# Answers "which agent is blocked waiting for me?" without attaching to each.
+set -eu
+
+HOSTS="${HERDR_REMOTE_HOSTS:-quicopt simulations_tb quicoptapi tryquicoptapi}"
+
+fmt='
+import sys, json
+host = sys.argv[1]
+try:
+    agents = json.load(sys.stdin)["result"]["agents"]
+except Exception:
+    print("  %-16s (no server running)" % host); sys.exit()
+if not agents:
+    print("  %-16s -" % host)
+for a in agents:
+    print("  %-16s %-9s %s" % (host, a.get("status", "?"), a.get("name") or a.get("kind", "?")))
+'
+
+echo "HOST             STATUS    AGENT"
+herdr agent list 2>/dev/null | python3 -c "$fmt" "local(mac)" || echo "  local(mac)       (no server)"
+for h in $HOSTS; do
+    ssh -o BatchMode=yes -o ConnectTimeout=10 "$h" \
+        '~/.local/bin/herdr agent list' 2>/dev/null | python3 -c "$fmt" "$h" \
+        || echo "  $h unreachable"
+done

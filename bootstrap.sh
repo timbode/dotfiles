@@ -196,6 +196,15 @@ for variant in server cluster gpu; do
     ln -sfn "$DOTFILES/config/eza/$variant.yml" ~/.config/eza/$variant/theme.yml
 done
 
+# ── link repo scripts into ~/.local/bin ───────────────────────────────────────
+# tools.zsh already puts ~/.local/bin on PATH. Linking rather than copying means
+# a later `git pull` updates the script with no bootstrap re-run.
+mkdir -p ~/.local/bin
+for script in "$DOTFILES"/bin/*; do
+    [[ -e "$script" ]] || continue   # unmatched glob stays literal when bin/ is empty
+    ln -sfn "$script" ~/.local/bin/"$(basename "$script")"
+done
+
 # ── write machine type (machine-local, not in repo) ───────────────────────────
 echo "export MACHINE_TYPE=\"$MACHINE_TYPE\"" > ~/.machine_type.zsh
 
