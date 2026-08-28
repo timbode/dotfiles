@@ -1,0 +1,295 @@
+#!/usr/bin/env python3
+"""Read-only sync + setup status for ~/dotclaude and ~/dotfiles on every machine.
+
+Reports; never changes anything. The only command it runs is `git fetch`, which
+moves no branch and touches no working tree -- no pull, no merge, no push, no
+checkout, no installer. `--suggest` prints the commands that would reconcile
+everything, but never runs them.
+
+It answers two questions that a bare `git status` does not.
+
+1. Is a working-tree change real? Claude Code owns ~/.claude/settings.json at
+   runtime -- /model, /effort, the settings UI and integrations like atuin's
+   rewrite it in place, reordering keys as they go -- and that path is a symlink
+   into ~/dotclaude, so every machine dirties the repo by itself. Flagging that
+   as something to review trains you to ignore the report. So each dirty JSON
+   file is parsed on both sides and compared with the runtime-managed keys
+   removed: equal after that is churn you can discard, unequal is yours. A
+   changed deny rule or a new hook is never churn.
+
+2. Is the repo actually *applied*? Pulling updates a checkout; it does not run
+   install.sh or bootstrap.sh. Symlinks already in place pick up new content for
+   free, so most pulls need nothing -- but a commit that adds a new file under
+   claude/, or a new entry in bootstrap.sh's symlink section, leaves a machine
+   holding the content with nothing pointing at it. That gap is invisible to git
+   and is exactly how a host ends up running config it appears to have.
+"""
+import concurrent.futures
+import json
+import os
+import subprocess
+import sys
+
+HOSTS = (os.environ.get("DOT_HOSTS") or os.environ.get("HERDR_REMOTE_HOSTS")
+         or "quicopt simulations_tb quicoptapi tryquicoptapi").split()
+REPOS = ("dotclaude", "dotfiles")
+MARK = "###DOTSTATUS###"
+
+USAGE = """usage: dot-status [--suggest] [--verbose]
+
+  (no args)   print the sync + setup table for this machine and every remote
+  --suggest   also print the commands that would reconcile it, bundled one ssh
+              per machine, plus a single copy-paste line for all of them --
+              printed only, never executed; pushing and merging stay yours
+  --verbose   name every churn and link problem instead of counting them
+
+Machines: """ + " ".join(["(local)"] + HOSTS) + """
+Override with DOT_HOSTS (falls back to HERDR_REMOTE_HOSTS)."""
+
+# Keys Claude Code and its integrations write on their own. A settings.json diff
+# confined to these is churn, not intent.
+VOLATILE = {
+    "model", "effortLevel", "modelSettings", "theme", "editorMode", "outputStyle",
+    "promptSuggestionEnabled", "awaySummaryEnabled", "skipWorkflowUsageWarning",
+    "autoCompactEnabled", "agentPushNotifEnabled", "statusLine", "alwaysThinkingEnabled",
+}
+VOLATILE_PERM = {"defaultMode"}
+
+# Mirrors the symlink section of bootstrap.sh -- keep the two in step. Anything
+# listed here whose source is absent from the repo is skipped, so a machine that
+# predates a new entry reports it as missing rather than erroring.
+DOTFILES_LINKS = {
+    ".config/shell/tools.zsh": "config/shell/tools.zsh",
+    ".config/eza/theme.yml": "config/eza/theme.yml",
+    ".config/atuin/config.toml": "config/atuin/config.toml",
+    **{f".config/starship/{v}.toml": f"config/starship/{v}.toml"
+       for v in ("mac", "server", "cluster", "gpu")},
+    **{f".config/eza/{v}/theme.yml": f"config/eza/{v}.yml"
+       for v in ("server", "cluster", "gpu")},
+}
+
+PROBE = r'''
+import glob, json, os, subprocess
+VOLATILE, VOLATILE_PERM = %r, %r
+REPOS, DOTFILES_LINKS = %r, %r
+H = os.path.expanduser("~")
+
+def git(d, *a):
+    p = subprocess.run(["git", "-C", d, *a], capture_output=True, text=True)
+    # rstrip only: `git status --porcelain` encodes status in the first two
+    # columns, so stripping leading space shifts every path by one char.
+    return p.stdout.rstrip("\n") if p.returncode == 0 else None
+
+def norm(o):
+    """Strip runtime-managed keys so only deliberate edits survive comparison."""
+    if not isinstance(o, dict):
+        return o
+    o = {k: v for k, v in o.items() if k not in VOLATILE}
+    perm = o.get("permissions")
+    if isinstance(perm, dict):
+        o["permissions"] = {k: v for k, v in perm.items() if k not in VOLATILE_PERM}
+    return o
+
+def link_state(target, source):
+    """Why a link is unusable, or None when it is fine."""
+    if not os.path.exists(source):
+        return None                      # repo does not ship it (yet)
+    if not os.path.lexists(target):
+        return "missing"
+    if not os.path.islink(target):
+        return "realfile"                # a real file shadows the repo copy
+    if os.path.realpath(target) != os.path.realpath(source):
+        return "wrong"
+    return None
+
+def links_for(repo):
+    if repo == "dotclaude":
+        src = os.path.join(H, "dotclaude", "claude")
+        pairs = [(os.path.join(H, ".claude", os.path.basename(i)), i)
+                 for i in sorted(glob.glob(src + "/*"))]
+    else:
+        d = os.path.join(H, "dotfiles")
+        pairs = [(os.path.join(H, dest), os.path.join(d, rel))
+                 for dest, rel in sorted(DOTFILES_LINKS.items())]
+        # bin/ is linked into ~/.local/bin by bootstrap.sh
+        pairs += [(os.path.join(H, ".local/bin", os.path.basename(i)), i)
+                  for i in sorted(glob.glob(os.path.join(d, "bin", "*")))]
+    out = []
+    for target, source in pairs:
+        why = link_state(target, source)
+        if why:
+            out.append(os.path.relpath(target, H) + ":" + why)
+    return out
+
+mt = os.path.join(H, ".machine_type.zsh")
+machine_type = None
+if os.path.exists(mt):
+    txt = open(mt).read()
+    machine_type = txt.split('"')[1] if '"' in txt else None
+
+repos = []
+for repo in REPOS:
+    d = os.path.join(H, repo)
+    if not os.path.isdir(os.path.join(d, ".git")):
+        repos.append({"repo": repo, "missing": True})
+        continue
+    subprocess.run(["git", "-C", d, "fetch", "-q", "origin"], capture_output=True)
+    counts = git(d, "rev-list", "--left-right", "--count", "origin/main...HEAD")
+    behind, ahead = counts.split() if counts else ("?", "?")
+    log = []
+    if ahead not in ("0", "?"):
+        s = git(d, "log", "origin/main..HEAD", "--format=%%h %%s", "-3")
+        log = s.splitlines() if s else []
+    churn, real = [], []
+    for line in (git(d, "status", "--porcelain") or "").splitlines():
+        if not line.strip():
+            continue
+        code, path = line[:2].strip(), line[3:].strip().strip('"')
+        # Only a modified tracked JSON file can be churn. Untracked, deleted or
+        # renamed is always a real decision.
+        if code == "M" and path.endswith(".json"):
+            head = git(d, "show", "HEAD:" + path)
+            try:
+                with open(os.path.join(d, path)) as fh:
+                    if norm(json.loads(head)) == norm(json.load(fh)):
+                        churn.append(path)
+                        continue
+            except Exception:
+                pass  # unparseable => treat as real; never silently absolve
+        real.append(("untracked " + path) if code == "??" else path)
+    repos.append({"repo": repo, "branch": git(d, "rev-parse", "--abbrev-ref", "HEAD"),
+                  "behind": behind, "ahead": ahead, "log": log,
+                  "churn": churn, "real": real, "links": links_for(repo)})
+print(%r + json.dumps({"machine_type": machine_type, "repos": repos}))
+''' % (VOLATILE, VOLATILE_PERM, REPOS, DOTFILES_LINKS, MARK)
+
+
+def probe(host):
+    """Run the probe locally or over ssh. Login banners are skipped via MARK."""
+    try:
+        if host is None:
+            p = subprocess.run([sys.executable, "-c", PROBE],
+                               capture_output=True, text=True, timeout=120)
+        else:
+            p = subprocess.run(
+                ["ssh", "-o", "ConnectTimeout=20", "-o", "BatchMode=yes", host,
+                 "python3", "-"],
+                input=PROBE, capture_output=True, text=True, timeout=120)
+        for line in p.stdout.splitlines():
+            if line.startswith(MARK):
+                return json.loads(line[len(MARK):])
+        return {"error": (p.stderr.strip().splitlines() or ["no response"])[-1][:60]}
+    except subprocess.TimeoutExpired:
+        return {"error": "timeout"}
+    except Exception as exc:
+        return {"error": str(exc)[:60]}
+
+
+def main():
+    argv = sys.argv[1:]
+    if {"-h", "--help"} & set(argv):
+        print(USAGE)
+        return 0
+    suggest, verbose = "--suggest" in argv, "--verbose" in argv
+
+    machines = [("local", None)] + [(h, h) for h in HOSTS]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(machines)) as pool:
+        results = list(pool.map(lambda m: probe(m[1]), machines))
+
+    print(f"{'machine':<16} {'repo':<10} {'branch':<20} {'sync':<18} "
+          f"{'setup':<14} working tree")
+    print("-" * 104)
+    stranded, needs_review, todo = [], [], {}
+
+    for (name, _), res in zip(machines, results):
+        if "error" in res:
+            print(f"{name:<16} {'-':<10} unreachable: {res['error']}")
+            continue
+        for r in res["repos"]:
+            if r.get("missing"):
+                print(f"{name:<16} {r['repo']:<10} {'not cloned':<20}")
+                continue
+            behind, ahead, links = r["behind"], r["ahead"], r["links"]
+            sync = "in sync" if behind == ahead == "0" else " ".join(
+                ([f"{behind} behind"] if behind != "0" else [])
+                + ([f"{ahead} AHEAD"] if ahead != "0" else []))
+            setup = "ok" if not links else (
+                ", ".join(links) if verbose else f"{len(links)} link(s) off")
+            tree = []
+            if r["churn"]:
+                tree.append("churn: " + (", ".join(r["churn"]) if verbose
+                                         else f"{len(r['churn'])} file(s)"))
+            if r["real"]:
+                tree.append("REVIEW: " + ", ".join(r["real"]))
+            print(f"{name:<16} {r['repo']:<10} {r['branch']:<20} {sync:<18} "
+                  f"{setup:<14} {'; '.join(tree) or 'clean'}")
+
+            if ahead not in ("0", "?"):
+                stranded += [(name, r["repo"], c) for c in r["log"]]
+            if r["real"]:
+                needs_review += [(name, r["repo"], f) for f in r["real"]]
+            if r["real"]:
+                continue  # a real edit blocks any automated reconcile
+            if behind not in ("0", "?") or links:
+                todo.setdefault(name, {"type": res.get("machine_type")})[r["repo"]] = {
+                    "behind": behind, "churn": r["churn"], "links": links}
+
+    print()
+    if stranded:
+        print("Stranded commits — exist on one machine only:")
+        for name, repo, c in stranded:
+            print(f"  {name}/{repo}: {c}")
+    if needs_review:
+        print("Working-tree changes that are not churn:")
+        for name, repo, f in needs_review:
+            print(f"  {name}/{repo}: {f}")
+    if not stranded and not needs_review and not todo:
+        print("Everything in sync and applied.")
+
+    if suggest and todo:
+        print("\n--- suggested commands (NOT run; pushing and merging are yours) ---")
+        for name, repo, c in stranded:
+            print(f"  # {name}/{repo} holds {c.split()[0]} — land it before resetting that machine")
+
+        lines = []
+        for name, repos in todo.items():
+            steps = []
+            for repo in REPOS:
+                info = repos.get(repo)
+                if not info:
+                    continue
+                part = ""
+                if info["churn"]:
+                    # pull --ff-only refuses to clobber a dirty tree, so the churn
+                    # goes first. Safe only because it was classified as churn --
+                    # never do this for a REVIEW file.
+                    part += f"git -C ~/{repo} checkout -- {' '.join(info['churn'])} && "
+                if info["behind"] not in ("0", "?"):
+                    part += f"git -C ~/{repo} pull --ff-only && "
+                # Re-run the installer whenever content moved or a link is off: a
+                # pull that adds a file leaves nothing pointing at it, and the
+                # installers are idempotent, so running one spuriously is free.
+                if repo == "dotclaude":
+                    part += "bash ~/dotclaude/install.sh"
+                else:
+                    mt = repos["type"] or "server"
+                    part += (f"bash ~/dotfiles/bootstrap.sh {mt}" if info["links"]
+                             else "true")
+                steps.append(part)
+            # ';' between repos so a failure in one still lets the other run.
+            inner = "; ".join(steps)
+            # Quoted for ssh: an unquoted ~ would expand here, not there.
+            lines.append(inner if name == "local" else f"ssh {name} '{inner}'")
+            note = ", ".join(
+                f"{repo} {i['behind']} behind" + (f", {len(i['links'])} link(s) off" if i["links"] else "")
+                for repo, i in repos.items() if repo != "type")
+            print(f"\n  {lines[-1]}\n      # {note}")
+
+        if lines:
+            print("\n  --- all of it, one line ---\n")
+            print("  " + "; ".join(lines))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
