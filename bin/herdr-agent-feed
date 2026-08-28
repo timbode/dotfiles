@@ -52,7 +52,15 @@ SSH_TIMEOUT = 20
 # Worst state wins when a host runs several agents: one blocked agent behind
 # two busy ones is the whole point of the panel, so it must not be averaged
 # away. `unknown` ranks lowest so a reachable-but-idle host outranks a stale one.
-RANK = {"blocked": 3, "working": 2, "idle": 1, "unknown": 0}
+RANK = {"blocked": 4, "working": 3, "done": 2, "idle": 1, "unknown": 0}
+
+# The API is asymmetric: `agent list` and `agent wait` know five states, but
+# `report-agent` accepts only four -- reporting `done` is rejected outright.
+# Left unmapped it fails the whole cycle, not just the host that finished, so
+# every machine silently stops updating the moment one agent ends its turn.
+# `done` means finished and not busy, which is `idle` in the four-state
+# vocabulary; the raw word survives in the $detail tally.
+REPORTABLE = {"done": "idle"}
 
 SSH = [
     "ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
@@ -217,8 +225,11 @@ def report(pane, row, seq, dry_run):
     process dies: unlike reported state, stale metadata then disappears rather
     than needing a release that a killed process never sends.
     """
+    state = REPORTABLE.get(row.state, row.state)
+    if state not in ("idle", "working", "blocked", "unknown"):
+        state = "unknown"   # a state added upstream must not fail the cycle
     args = ["pane", "report-agent", pane, "--source", SOURCE,
-            "--agent", row.label, "--state", row.state, "--message", row.message,
+            "--agent", row.label, "--state", state, "--message", row.message,
             "--seq", str(seq)]
     meta = ["pane", "report-metadata", pane, "--source", SOURCE, "--seq", str(seq)]
     if row.detail:
@@ -304,8 +315,13 @@ def cycle(claims, seq, dry_run, verbose):
             seq += 1
             release(pane, claims[pane], seq, dry_run)
         seq += 1
-        report(pane, summary, seq, dry_run)
-        claims[pane] = summary.label
+        # One unreportable host must not cost every other host its update.
+        try:
+            report(pane, summary, seq, dry_run)
+            claims[pane] = summary.label
+        except RuntimeError as err:
+            print(f"  {host}: {err}", file=sys.stderr)
+            continue
         if verbose:
             print(f"  {host:<16} {summary.state:<8} {summary.label}"
                   f"  |  {summary.detail}", file=sys.stderr)
