@@ -63,6 +63,35 @@ if (( ${#apps[@]} == 0 )); then
     exit 0
 fi
 
+# Tiles the Dock already has that this script did not put there: Shortcuts
+# droplets, anything dragged in by hand. The rebuild below wipes everything, so
+# without this they are destroyed — which has already cost two Shortcuts tiles
+# once. Collect them first and put them back afterwards.
+#
+# Match on bundle identifier, not path. Safari's Dock entry points into
+# /System/Volumes/Preboot/Cryptexes/App/..., not /Applications/Safari.app, so a
+# path comparison would read it as foreign and pin a second copy.
+known_ids=()
+for path in "${apps[@]}"; do
+    id=$(defaults read "$path/Contents/Info" CFBundleIdentifier 2>/dev/null || true)
+    [[ -n "$id" ]] && known_ids+=("$id")
+done
+
+extras=()
+while IFS=$'\t' read -r _name url section _plist bundle; do
+    [[ "$section" == persistentApps ]] || continue
+    for id in ${known_ids[@]+"${known_ids[@]}"}; do
+        [[ "$bundle" == "$id" ]] && continue 2
+    done
+    # dockutil prints URL-escaped paths but only accepts plain ones.
+    esc="${url#file://}"; esc="${esc%/}"
+    extras+=("$(printf '%b' "${esc//%/\\x}")")
+done < <(dockutil --list 2>/dev/null || true)
+
+if (( ${#extras[@]} > 0 )); then
+    echo "  preserving ${#extras[@]} tile(s) added outside this script"
+fi
+
 # Rebuild: wipe, then re-add. Individual dockutil failures are non-fatal — a
 # single bad tile must never abort the script and leave the Dock empty.
 # --no-restart batches the writes so the Dock only restarts once, at the end.
@@ -70,6 +99,12 @@ dockutil --no-restart --remove all >/dev/null 2>&1 || true
 for path in "${apps[@]}"; do
     dockutil --no-restart --add "$path" >/dev/null 2>&1 \
         || echo "  • could not add: $(basename "$path" .app)"
+done
+
+# Preserved tiles go back after the pinned set, in the order they were found.
+for path in ${extras[@]+"${extras[@]}"}; do
+    dockutil --no-restart --add "$path" >/dev/null 2>&1 \
+        || echo "  • could not restore: $(basename "$path" .app)"
 done
 
 # Downloads stack on the right: fan view, sorted by date added, stack icon.
