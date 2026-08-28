@@ -204,12 +204,17 @@ Four things the reporting API forces:
   path releases; SIGTERM is turned into the same unwind as ctrl-c so
   `launchctl unload` cleans up; and `~/.cache/herdr-agent-feed.json` lets the
   next run retire claims left by a run that was killed outright.
-- **An unreachable host reports `unknown`,** never its last good value. `None`
-  and `[]` are different answers: no route versus a reachable machine running
-  nothing.
+- **A host running nothing gets no row at all.** Reporting `idle` there invents
+  an agent that does not exist, colours the workspace dot as though something
+  were waiting, and prints a label that can only repeat the group header above
+  it — the panel becomes a second copy of the spaces list. An *unreachable*
+  host is a different answer and does get a row, labelled `unreachable`: no
+  route and nothing running must not render alike.
 - **Identity is (source, label).** A label that follows the remote's window
   title would strand a ghost row on every title change, so a changed label
-  releases the old one first.
+  releases the old one first. The label is also never the host name, which is
+  already the group header: one agent lends its window title, several become
+  `N agents` with the tally in the message.
 - **One pane carries one state.** A host running several agents collapses
   worst-wins — `blocked` > `working` > `idle` > `unknown` — which is the
   question being asked anyway. Subagents inside a Claude session remain

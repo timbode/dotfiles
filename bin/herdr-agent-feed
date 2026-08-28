@@ -156,22 +156,27 @@ def poll(host):
 
 
 def summarize(host, agents):
-    """Reduce a host's agent list to one (state, label, message) row.
+    """Reduce a host's agent list to one (state, label, message) row, or None.
 
-    The label is what the sidebar shows, so a lone agent lends its window
-    title; several agents collapse to a count, because one row per pane is all
-    the reporting API can carry.
+    None means claim nothing. A reachable host running no agent has no agent to
+    report: saying `idle` would invent one, colour the workspace dot as though
+    something were waiting there, and print a row whose label can only repeat
+    the group header above it.
+
+    The label is what the sidebar shows beneath that header, so it must never
+    be the host name again. A lone agent lends its window title; several
+    collapse to a count, since one pane carries one row.
     """
     if agents is None:
-        return "unknown", host, "unreachable"
+        return "unknown", "unreachable", f"{host}: no route or no herdr server"
     if not agents:
-        return "idle", host, "no agents"
+        return None
 
     state = max((a.get("agent_status", "unknown") for a in agents),
                 key=lambda s: RANK.get(s, 0))
     if len(agents) == 1:
         one = agents[0]
-        label = one.get("terminal_title_stripped") or one.get("agent") or host
+        label = one.get("terminal_title_stripped") or one.get("agent") or "agent"
         return state, label, f"{host}: {state}"
 
     tally = {}
@@ -246,7 +251,15 @@ def cycle(claims, seq, dry_run, verbose):
         results = dict(zip(panes, pool.map(poll, panes)))
 
     for host, pane in panes.items():
-        state, label, message = summarize(host, results[host])
+        summary = summarize(host, results[host])
+        if summary is None:
+            if pane in claims:
+                seq += 1
+                release(pane, claims.pop(pane), seq, dry_run)
+            if verbose:
+                print(f"  {host:<16} -        (no agents)", file=sys.stderr)
+            continue
+        state, label, message = summary
         # Identity is (source, label), so a changed label must retire the old
         # row or it lingers forever with nothing left to update it.
         if claims.get(pane) not in (None, label):
