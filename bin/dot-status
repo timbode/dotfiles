@@ -68,10 +68,17 @@ DOTFILES_LINKS = {
        for v in ("server", "cluster", "gpu")},
 }
 
+# Links bootstrap.sh only creates on Darwin. Auditing these everywhere would
+# report them permanently missing on the Linux remotes, and --suggest would
+# then recommend a bootstrap re-run that can never satisfy the check.
+DARWIN_LINKS = {
+    ".config/herdr/config.toml": "config/herdr/config.toml",
+}
+
 PROBE = r'''
-import glob, json, os, subprocess
+import glob, json, os, platform, subprocess
 VOLATILE, VOLATILE_PERM = %r, %r
-REPOS, DOTFILES_LINKS = %r, %r
+REPOS, DOTFILES_LINKS, DARWIN_LINKS = %r, %r, %r
 H = os.path.expanduser("~")
 
 def git(d, *a):
@@ -109,8 +116,11 @@ def links_for(repo):
                  for i in sorted(glob.glob(src + "/*"))]
     else:
         d = os.path.join(H, "dotfiles")
+        wanted = dict(DOTFILES_LINKS)
+        if platform.system() == "Darwin":
+            wanted.update(DARWIN_LINKS)
         pairs = [(os.path.join(H, dest), os.path.join(d, rel))
-                 for dest, rel in sorted(DOTFILES_LINKS.items())]
+                 for dest, rel in sorted(wanted.items())]
         # bin/ is linked into ~/.local/bin by bootstrap.sh
         pairs += [(os.path.join(H, ".local/bin", os.path.basename(i)), i)
                   for i in sorted(glob.glob(os.path.join(d, "bin", "*")))]
@@ -161,7 +171,7 @@ for repo in REPOS:
                   "behind": behind, "ahead": ahead, "log": log,
                   "churn": churn, "real": real, "links": links_for(repo)})
 print(%r + json.dumps({"machine_type": machine_type, "repos": repos}))
-''' % (VOLATILE, VOLATILE_PERM, REPOS, DOTFILES_LINKS, MARK)
+''' % (VOLATILE, VOLATILE_PERM, REPOS, DOTFILES_LINKS, DARWIN_LINKS, MARK)
 
 
 def probe(host):
