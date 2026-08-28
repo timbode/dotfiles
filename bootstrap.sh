@@ -25,6 +25,10 @@ _install_fonts_linux() {
         echo "  ⚠ fontconfig not found — skipping font install (install fontconfig and re-run)"
         return
     fi
+    if ! command -v unzip &>/dev/null; then
+        echo "  ⚠ unzip not found — skipping font install (install unzip and re-run)"
+        return
+    fi
     local font_dir="$HOME/.local/share/fonts"
     mkdir -p "$font_dir"
     local tmp url
@@ -124,7 +128,12 @@ install_linux() {
         rm -rf "$GLAB_TMP"
     fi
 
-    _install_fonts_linux
+    # Fonts are cosmetic, headless servers render none, and this is the last step
+    # before the symlink section -- so an unguarded failure here (missing unzip, a
+    # changed archive layout, a rate-limited API yielding an empty URL) aborts
+    # bootstrap under `set -e` and silently skips every symlink and the ~/.zshrc
+    # patch. Same lesson as the macOS block below.
+    _install_fonts_linux || echo "  ⚠ font install failed — continuing"
 }
 
 install_mac() {
