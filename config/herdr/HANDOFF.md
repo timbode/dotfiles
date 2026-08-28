@@ -159,9 +159,67 @@ one table, over SSH. Answers "which agent is blocked waiting for me?" without
 attaching to each machine in turn. Exists because herdr's own sidebar is
 per-server.
 
-> **Untested path:** only the empty-agent-list case has been exercised. The
-> formatting for a *populated* list has never actually run. If a column looks
-> wrong the first time a real agent shows up, that is why.
+The populated path has now run, and the warning that used to sit here was
+justified: it read `status` and `name`, neither of which exists, so every live
+agent rendered as `?  ?`. The fields are `agent_status` and
+`terminal_title_stripped`.
+
+It also skips panes listed in `~/.cache/herdr-agent-feed.json`. Those are the
+Mac panes the feed reports into, and their state is a copy of a remote this
+table already lists on its own row — without the filter every machine appears
+twice. A local pane the feed does not own is a real local agent and still shows.
+
+### `herdr-agent-feed`
+
+Populates the Mac's agent sidebar, which is otherwise permanently empty.
+
+Herdr's agent panel lists local panes only, and every pane on this Mac is a
+viewer onto another machine: the foreground process is `herdr`, and the screen
+is the remote's TUI chrome rather than a Claude prompt box. The agents are
+processes on the remotes. Screen detection cannot see them and no configuration
+changes that.
+
+`herdr pane report-agent` is the documented way in — the same mechanism
+lifecycle-hook integrations use. The feed polls each remote's own
+`herdr agent list` over ssh and reports the rollup against the local pane
+displaying that host, so the panel finally answers *which machine is blocked
+waiting for me?*
+
+```bash
+herdr-agent-feed --dry-run   # print what it would report, touch nothing
+herdr-agent-feed --once      # one cycle
+herdr-agent-feed --clear     # release every claim, restore screen detection
+herdr-agent-feed -v          # foreground, logging each cycle
+```
+
+Runs under launchd as `com.dotfiles.herdr-agent-feed`, installed by
+`macos/herdr-agent-feed.sh` from a generated plist (generated, not symlinked
+like keyremap's: it names an absolute path and launchd does not expand `$HOME`).
+Log: `~/Library/Logs/herdr-agent-feed.log`.
+
+Four things the reporting API forces:
+
+- **Reported state outranks screen detection and persists until replaced.** A
+  crashed feed would leave a comfortable lie on screen indefinitely. Every exit
+  path releases; SIGTERM is turned into the same unwind as ctrl-c so
+  `launchctl unload` cleans up; and `~/.cache/herdr-agent-feed.json` lets the
+  next run retire claims left by a run that was killed outright.
+- **An unreachable host reports `unknown`,** never its last good value. `None`
+  and `[]` are different answers: no route versus a reachable machine running
+  nothing.
+- **Identity is (source, label).** A label that follows the remote's window
+  title would strand a ghost row on every title change, so a changed label
+  releases the old one first.
+- **One pane carries one state.** A host running several agents collapses
+  worst-wins — `blocked` > `working` > `idle` > `unknown` — which is the
+  question being asked anyway. Subagents inside a Claude session remain
+  invisible; nothing can fix that (see Gotchas).
+
+Under launchd the PATH is minimal, so the plist supplies one; a missing `herdr`
+raises like any other failure rather than escaping as `FileNotFoundError` and
+turning a PATH mistake into a restart loop. A cycle that fails logs and waits
+instead of exiting, because a crash loop would re-dial all four hosts once per
+throttle window.
 
 ### `dot-status`
 
@@ -239,6 +297,17 @@ knowing given the panes hold coding agents.
   inner session (`src/config/keybinds.rs:1029`). `--remote-keybindings server`
   does *not* help: it only selects which keymap file the remote client reads, not
   which herdr receives the keystroke.
+- **The agent panel lists panes, not agents.** Per the docs, "each pane has one
+  status authority", so one Claude session is one row no matter what runs inside
+  it. Subagents have no terminal and no pane, and detection is regex over a
+  pane's bottom screen buffer, so they can never be listed. Herdr does *read*
+  them — `claude.toml` has a rule `background_agents_working` matching
+  `Waiting for N background agents to finish` — but the rule's only output is
+  `state = "working"`. The count colours one dot and is discarded.
+- **The sidebar is split 50/50 by default.** `sidebar_section_split` in
+  `~/.config/herdr/session.json` (persisted UI state, not config — there is a
+  drag handler for it). Worth dragging down on any machine where the agents half
+  stays sparse.
 - **Installing atuin registers Claude Code hooks, uninvited.** atuin 18.20's
   installer adds `atuin hook claude-code` to `PreToolUse`, `PostToolUse` and
   `PostToolUseFailure` (matcher `Bash`), and re-serialises `settings.json` with
