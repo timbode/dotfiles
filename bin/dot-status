@@ -73,6 +73,8 @@ DOTFILES_LINKS = {
 # then recommend a bootstrap re-run that can never satisfy the check.
 DARWIN_LINKS = {
     ".config/herdr/config.toml": "config/herdr/config.toml",
+    "Library/Application Support/iTerm2/DynamicProfiles/hosts.json":
+        "config/iterm/hosts.json",
 }
 
 PROBE = r'''

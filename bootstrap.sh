@@ -218,6 +218,13 @@ done
 if [[ $(uname -s) == Darwin ]]; then
     mkdir -p ~/.config/herdr
     ln -sfn "$DOTFILES/config/herdr/config.toml" ~/.config/herdr/config.toml
+
+    # iTerm dynamic profiles: one per remote, each attaching to that host's
+    # tmux session. iTerm rewrites its own plist on quit but never touches this
+    # folder, so a tracked file is the only way these survive.
+    itermdir="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
+    mkdir -p "$itermdir"
+    ln -sfn "$DOTFILES/config/iterm/hosts.json" "$itermdir/hosts.json"
 fi
 
 # ── link repo scripts into ~/.local/bin ───────────────────────────────────────

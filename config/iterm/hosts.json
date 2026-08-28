@@ -1,0 +1,36 @@
+{
+  "Profiles": [
+    {
+      "Name": "quicopt",
+      "Guid": "dotfiles-quicopt",
+      "Custom Command": "Yes",
+      "Command": "ssh -t quicopt tmux new -A -s main",
+      "Close Sessions On End": false,
+      "Shortcut": "1"
+    },
+    {
+      "Name": "simulations_tb",
+      "Guid": "dotfiles-simulations_tb",
+      "Custom Command": "Yes",
+      "Command": "ssh -t simulations_tb tmux new -A -s main",
+      "Close Sessions On End": false,
+      "Shortcut": "2"
+    },
+    {
+      "Name": "quicoptapi",
+      "Guid": "dotfiles-quicoptapi",
+      "Custom Command": "Yes",
+      "Command": "ssh -t quicoptapi tmux new -A -s main",
+      "Close Sessions On End": false,
+      "Shortcut": "3"
+    },
+    {
+      "Name": "tryquicoptapi",
+      "Guid": "dotfiles-tryquicoptapi",
+      "Custom Command": "Yes",
+      "Command": "ssh -t tryquicoptapi tmux new -A -s main",
+      "Close Sessions On End": false,
+      "Shortcut": "4"
+    }
+  ]
+}
