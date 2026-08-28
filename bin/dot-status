@@ -269,12 +269,20 @@ def main():
                 # Re-run the installer whenever content moved or a link is off: a
                 # pull that adds a file leaves nothing pointing at it, and the
                 # installers are idempotent, so running one spuriously is free.
+                # Both installers run whenever anything moved, not only when a
+                # link is already known bad. The audit happens BEFORE the pull, so
+                # a commit that adds a file needing a new link is invisible to it:
+                # suggesting the pull alone would leave the content in place with
+                # nothing pointing at it, which is the failure this tool exists to
+                # catch. Both are idempotent, so a needless run costs nothing.
                 if repo == "dotclaude":
                     part += "bash ~/dotclaude/install.sh"
+                elif repos["type"]:
+                    part += f"bash ~/dotfiles/bootstrap.sh {repos['type']}"
                 else:
-                    mt = repos["type"] or "server"
-                    part += (f"bash ~/dotfiles/bootstrap.sh {mt}" if info["links"]
-                             else "true")
+                    # Without ~/.machine_type.zsh a guess would write the wrong
+                    # starship and eza theme, so refuse and say so.
+                    part += "echo 'SKIPPED bootstrap: no ~/.machine_type.zsh'"
                 steps.append(part)
             # ';' between repos so a failure in one still lets the other run.
             inner = "; ".join(steps)
