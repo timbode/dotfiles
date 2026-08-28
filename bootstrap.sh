@@ -226,9 +226,11 @@ echo "export MACHINE_TYPE=\"$MACHINE_TYPE\"" > ~/.machine_type.zsh
 # ── patch ~/.zshrc ────────────────────────────────────────────────────────────
 [[ -f ~/.zshrc ]] || touch ~/.zshrc
 
-BACKUP="$HOME/.zshrc.bak.$(date +%Y%m%d_%H%M%S)"
-cp ~/.zshrc "$BACKUP"
-echo "Backed up ~/.zshrc → $BACKUP"
+# Snapshot before the edits, but keep it only if they actually changed anything.
+# This script is meant to be re-runnable, and an unconditional backup left a
+# ~/.zshrc.bak.<timestamp> behind on every single run.
+_zshrc_before="$(mktemp)"
+cp ~/.zshrc "$_zshrc_before"
 
 # Neutralise ZSH_THEME (handles any quote style)
 _sedi 's/ZSH_THEME=.*/ZSH_THEME=""/' ~/.zshrc
@@ -245,6 +247,14 @@ grep -q 'POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD' ~/.zshrc || \
 # Append machine_type + tools source — idempotent
 if ! grep -q 'machine_type.zsh' ~/.zshrc; then
     printf '\nsource ~/.machine_type.zsh\nsource ~/.config/shell/tools.zsh\n' >> ~/.zshrc
+fi
+
+if cmp -s "$_zshrc_before" ~/.zshrc; then
+    rm -f "$_zshrc_before"
+else
+    BACKUP="$HOME/.zshrc.bak.$(date +%Y%m%d_%H%M%S)"
+    mv "$_zshrc_before" "$BACKUP"
+    echo "Backed up ~/.zshrc → $BACKUP"
 fi
 
 echo ""
