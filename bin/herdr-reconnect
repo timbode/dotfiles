@@ -1,0 +1,27 @@
+#!/bin/sh
+# Keep a herdr remote view attached across ssh drops.
+#
+# herdr's bridge writes its own ssh config with ServerAliveInterval 15 and
+# ServerAliveCountMax 4, so a dead link is noticed within about a minute and the
+# client exits non-zero. That is correct behaviour rather than a fault -- but on
+# its own it leaves a dead pane and a command to retype, which is the one moment
+# this setup feels worse than it is. Nothing is ever lost: the remote server owns
+# the panes and keeps running regardless, so reattaching restores the same
+# session, same scrollback, same agents.
+#
+# Exit 0 means the session was left on purpose (detached from the inner herdr),
+# so the loop stops. Any other status is treated as a dropped link and retried
+# with backoff, capped so an unreachable host does not spin.
+set -u
+host=${1:?usage: herdr-reconnect <ssh-target>}
+delay=1
+while :; do
+    if herdr --remote "$host"; then
+        exit 0
+    fi
+    printf '\n[herdr-reconnect] %s dropped — retrying in %ss (ctrl-c to stop)\n' \
+        "$host" "$delay"
+    sleep "$delay"
+    delay=$((delay * 2))
+    [ "$delay" -gt 30 ] && delay=30
+done
