@@ -61,9 +61,20 @@ sidebar entry.
 
 ### Local — `~/.config/herdr/config.toml`
 
+Tracked as `config/herdr/config.toml` and symlinked by `bootstrap.sh`, **on
+Darwin only**: this Mac needs `allow_nested` and the agent-sidebar rows, while
+the remotes need the opposite UI settings below. One shared file would break one
+end or the other.
+
 ```toml
 [experimental]
 allow_nested = true
+
+[ui.sidebar.agents]
+rows = [
+  ["state_icon", "agent", "state_text"],
+  ["$detail"],
+]
 ```
 
 **Required.** Without it, `herdr --remote <host>` run inside a herdr pane exits
@@ -216,9 +227,15 @@ Four things the reporting API forces:
   already the group header: one agent lends its window title, several become
   `N agents` with the tally in the message.
 - **One pane carries one state.** A host running several agents collapses
-  worst-wins — `blocked` > `working` > `idle` > `unknown` — which is the
-  question being asked anyway. Subagents inside a Claude session remain
+  worst-wins — `blocked` > `working` > `done` > `idle` > `unknown` — which is
+  the question being asked anyway. Subagents inside a Claude session remain
   invisible; nothing can fix that (see Gotchas).
+- **One entry, but several lines.** The entry ceiling is real (reporting three
+  labels to one pane leaves only the last), but `ui.sidebar.agents.rows` renders
+  an entry as many lines, and a `$token` line is filled by
+  `herdr pane report-metadata --token NAME=VALUE --ttl-ms N`. That is what makes
+  `3 agents` / `1 blocked, 2 working` possible. Tokens are **not** namespaced by
+  source: `--clear-token` from one source clears another source's token.
 
 Under launchd the PATH is minimal, so the plist supplies one; a missing `herdr`
 raises like any other failure rather than escaping as `FileNotFoundError` and
@@ -302,6 +319,13 @@ knowing given the panes hold coding agents.
   inner session (`src/config/keybinds.rs:1029`). `--remote-keybindings server`
   does *not* help: it only selects which keymap file the remote client reads, not
   which herdr receives the keystroke.
+- **`report-agent` accepts four states; the rest of the API knows five.**
+  `agent list` returns `done` and `agent wait --until` accepts it, but
+  `pane report-agent --state done` is rejected outright with *invalid pane agent
+  state: done*. Anything mirroring state from one server into another has to map
+  `done` onto `idle`, and must do so per host — an unguarded failure escapes the
+  per-host loop and freezes every other machine's row, not just the one that
+  finished.
 - **The agent panel lists panes, not agents.** Per the docs, "each pane has one
   status authority", so one Claude session is one row no matter what runs inside
   it. Subagents have no terminal and no pane, and detection is regex over a
