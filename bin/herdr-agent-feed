@@ -27,16 +27,24 @@ so a label change is always a release of the old one before the new report.
 """
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
 import time
+from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 
 ALL_HOSTS = os.environ.get(
     "HERDR_REMOTE_HOSTS", "quicopt simulations_tb quicoptapi tryquicoptapi"
 ).split()
 SOURCE = "custom:herdr-agent-feed"
+
+# One sidebar entry per pane, but an entry renders as many lines as
+# ui.sidebar.agents.rows declares, and a $token line is filled by
+# `pane report-metadata`. That second line is the only room the API gives us
+# for anything beyond a label, so it carries what the label had to drop.
+Row = namedtuple("Row", "state label message detail")
 STATE_FILE = os.path.expanduser("~/.cache/herdr-agent-feed.json")
 INTERVAL = float(os.environ.get("HERDR_FEED_INTERVAL", "15"))
 SSH_TIMEOUT = 20
@@ -155,6 +163,15 @@ def poll(host):
         return None
 
 
+def tilde(path):
+    """Abbreviate a remote home directory to `~`.
+
+    The remotes have different home directories and this Mac cannot know which,
+    so match the shape rather than a known prefix.
+    """
+    return re.sub(r"^/(?:home|Users)/[^/]+", "~", path or "")
+
+
 def summarize(host, agents):
     """Reduce a host's agent list to one (state, label, message) row, or None.
 
@@ -168,7 +185,8 @@ def summarize(host, agents):
     collapse to a count, since one pane carries one row.
     """
     if agents is None:
-        return "unknown", "unreachable", f"{host}: no route or no herdr server"
+        return Row("unknown", "unreachable", f"{host}: unreachable",
+                   "no route or no herdr server")
     if not agents:
         return None
 
@@ -177,38 +195,59 @@ def summarize(host, agents):
     if len(agents) == 1:
         one = agents[0]
         label = one.get("terminal_title_stripped") or one.get("agent") or "agent"
-        return state, label, f"{host}: {state}"
+        # A lone agent has no tally worth printing, so the second line shows
+        # where it is working instead of restating the state already on line
+        # one. An agent sitting at $HOME has nothing to say there, and a line
+        # reading "~" is worse than no line: detail is dropped instead.
+        cwd = tilde(one.get("cwd", ""))
+        return Row(state, label, f"{host}: {state}", "" if cwd == "~" else cwd)
 
     tally = {}
     for agent in agents:
         status = agent.get("agent_status", "unknown")
         tally[status] = tally.get(status, 0) + 1
     detail = ", ".join(f"{n} {s}" for s, n in sorted(tally.items()))
-    return state, f"{len(agents)} agents", f"{host}: {detail}"
+    return Row(state, f"{len(agents)} agents", f"{host}: {detail}", detail)
 
 
-def report(pane, label, state, message, seq, dry_run):
-    """Claim `pane` for `label` and set its state."""
+def report(pane, row, seq, dry_run):
+    """Claim `pane` for this row's label, set its state, and fill $detail.
+
+    The token carries a TTL of a few cycles so it expires by itself if this
+    process dies: unlike reported state, stale metadata then disappears rather
+    than needing a release that a killed process never sends.
+    """
     args = ["pane", "report-agent", pane, "--source", SOURCE,
-            "--agent", label, "--state", state, "--message", message,
+            "--agent", row.label, "--state", row.state, "--message", row.message,
             "--seq", str(seq)]
+    meta = ["pane", "report-metadata", pane, "--source", SOURCE, "--seq", str(seq)]
+    if row.detail:
+        meta += ["--token", f"detail={row.detail}",
+                 "--ttl-ms", str(int(INTERVAL * 3000))]
+    else:
+        meta += ["--clear-token", "detail"]
     if dry_run:
         print("herdr " + " ".join(args))
+        print("herdr " + " ".join(meta))
         return
     raw(*args)
+    raw(*meta)
 
 
 def release(pane, label, seq, dry_run):
     """Drop this feed's claim on `pane`, leaving screen detection in charge."""
     args = ["pane", "release-agent", pane, "--source", SOURCE,
             "--agent", label, "--seq", str(seq)]
+    meta = ["pane", "report-metadata", pane, "--source", SOURCE,
+            "--clear-token", "detail", "--seq", str(seq)]
     if dry_run:
         print("herdr " + " ".join(args))
         return
-    try:
-        raw(*args)
-    except RuntimeError:
-        pass  # already gone: the pane closed, or the server forgot it
+    for command in (args, meta):
+        try:
+            raw(*command)
+        except RuntimeError:
+            pass  # already gone: the pane closed, or the server forgot it
 
 
 def load_state():
@@ -259,17 +298,17 @@ def cycle(claims, seq, dry_run, verbose):
             if verbose:
                 print(f"  {host:<16} -        (no agents)", file=sys.stderr)
             continue
-        state, label, message = summary
         # Identity is (source, label), so a changed label must retire the old
         # row or it lingers forever with nothing left to update it.
-        if claims.get(pane) not in (None, label):
+        if claims.get(pane) not in (None, summary.label):
             seq += 1
             release(pane, claims[pane], seq, dry_run)
         seq += 1
-        report(pane, label, state, message, seq, dry_run)
-        claims[pane] = label
+        report(pane, summary, seq, dry_run)
+        claims[pane] = summary.label
         if verbose:
-            print(f"  {host:<16} {state:<8} {label}", file=sys.stderr)
+            print(f"  {host:<16} {summary.state:<8} {summary.label}"
+                  f"  |  {summary.detail}", file=sys.stderr)
 
     if not dry_run:
         save_state(claims)

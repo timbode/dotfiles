@@ -211,6 +211,15 @@ for variant in server cluster gpu; do
     ln -sfn "$DOTFILES/config/eza/$variant.yml" ~/.config/eza/$variant/theme.yml
 done
 
+# herdr's config is Darwin-only on purpose: this Mac is the hub and needs
+# allow_nested plus the agent-sidebar rows, while the remotes need the opposite
+# UI settings (collapsed sidebar, hidden tab bar) because their UI renders
+# *inside* a pane here. One shared file would break one end or the other.
+if [[ $(uname -s) == Darwin ]]; then
+    mkdir -p ~/.config/herdr
+    ln -sfn "$DOTFILES/config/herdr/config.toml" ~/.config/herdr/config.toml
+fi
+
 # ── link repo scripts into ~/.local/bin ───────────────────────────────────────
 # tools.zsh already puts ~/.local/bin on PATH. Linking rather than copying means
 # a later `git pull` updates the script with no bootstrap re-run.

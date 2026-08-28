@@ -1,0 +1,19 @@
+onboarding = false
+# Allows `herdr --remote <host>` to run inside a local herdr pane, so one local
+# Herdr can hold a tab per remote machine. Without this, the nested-launch guard
+# rejects the remote client with "nested herdr is disabled by default".
+[experimental]
+allow_nested = true
+
+[theme]
+name = "catppuccin"
+auto_switch = false
+
+# Agent sidebar rows. The second line renders the $detail token reported by
+# herdr-agent-feed, so a host running several agents shows the breakdown
+# instead of just a count. Tokens come from `herdr pane report-metadata`.
+[ui.sidebar.agents]
+rows = [
+  ["state_icon", "agent", "state_text"],
+  ["$detail"],
+]
