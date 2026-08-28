@@ -1,0 +1,326 @@
+#!/usr/bin/env python3
+"""Feed remote agent state into this Mac's Herdr agent sidebar.
+
+Herdr runs one server per machine and its agent panel lists only local panes.
+On this Mac that panel is therefore permanently empty: the remote workspaces
+run the herdr *client*, so the pane's foreground process is `herdr` and its
+screen is the remote's TUI chrome -- the Claude sessions being displayed are
+processes on the remotes, which screen detection cannot see and never will.
+
+`herdr pane report-agent` is the documented way in, the same mechanism that
+lifecycle-hook integrations use. This polls each remote's own agent list over
+ssh and reports the rollup against the local pane that displays that host, so
+the sidebar answers the question herdr otherwise cannot: which machine is
+blocked waiting for me?
+
+Two properties the reporting API forces us to get right:
+
+Reported state outranks screen detection and persists until replaced, so a
+crashed feed leaves a comfortable lie on screen indefinitely. Every exit path
+releases what it claimed, an unreachable host is reported `unknown` rather
+than left at its last good value, and a state file lets the next run clean up
+after a previous one that was killed outright.
+
+Agent identity is (source, label). A label that tracked the remote's window
+title would strand the old label as a ghost row every time that title changed,
+so a label change is always a release of the old one before the new report.
+"""
+import json
+import os
+import signal
+import subprocess
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
+
+ALL_HOSTS = os.environ.get(
+    "HERDR_REMOTE_HOSTS", "quicopt simulations_tb quicoptapi tryquicoptapi"
+).split()
+SOURCE = "custom:herdr-agent-feed"
+STATE_FILE = os.path.expanduser("~/.cache/herdr-agent-feed.json")
+INTERVAL = float(os.environ.get("HERDR_FEED_INTERVAL", "15"))
+SSH_TIMEOUT = 20
+
+# Worst state wins when a host runs several agents: one blocked agent behind
+# two busy ones is the whole point of the panel, so it must not be averaged
+# away. `unknown` ranks lowest so a reachable-but-idle host outranks a stale one.
+RANK = {"blocked": 3, "working": 2, "idle": 1, "unknown": 0}
+
+SSH = [
+    "ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
+    # A private control socket: herdr's own ssh must never join it, or stopping
+    # this feed could take the workspace connections down with it.
+    "-o", "ControlMaster=auto",
+    "-o", "ControlPath=" + os.path.expanduser("~/.ssh/cm-agentfeed-%r@%h:%p"),
+    "-o", "ControlPersist=120",
+]
+
+USAGE = """usage: herdr-agent-feed [--once] [--dry-run] [--clear] [-v]
+
+  (no args)   poll forever every %g s, reporting into the local sidebar
+  --once      one poll cycle, then exit (releases nothing -- state stays)
+  --dry-run   print the report commands instead of running them
+  --clear     release every pane this feed has claimed, then exit
+  -v          log each cycle to stderr
+
+Reads each remote's own `herdr agent list` over ssh and reports the rollup
+against the local pane showing that host. Remote work is never touched; this
+only writes agent state into the local server.
+
+Hosts: %s""" % (INTERVAL, " ".join(ALL_HOSTS))
+
+
+def raw(*args):
+    """Run a local herdr command, returning stdout.
+
+    Raises RuntimeError for both a failed command and a missing binary: under
+    launchd the PATH is minimal, and a bare FileNotFoundError would escape the
+    per-cycle handler and turn a PATH mistake into a restart loop.
+    """
+    try:
+        out = subprocess.run(["herdr", *args], capture_output=True, text=True)
+    except FileNotFoundError:
+        raise RuntimeError("herdr not found on PATH")
+    if out.returncode != 0:
+        raise RuntimeError(f"herdr {' '.join(args)}: {out.stderr.strip()}")
+    return out.stdout
+
+
+def herdr(*args):
+    """Run a local herdr command that emits a JSON envelope, returning .result."""
+    return json.loads(raw(*args))["result"]
+
+
+def workspaces():
+    """Map of workspace label -> workspace id on the local server."""
+    return {w["label"]: w["workspace_id"]
+            for w in herdr("workspace", "list")["workspaces"]}
+
+
+def displays_host(pane_id, host):
+    """Whether this pane is the viewer for `host`.
+
+    Matches the supervisor or the client it runs, anchored at the end of the
+    command line so `quicopt` cannot also match `quicoptapi`.
+    """
+    try:
+        info = herdr("pane", "process-info", "--pane", pane_id)
+    except RuntimeError:
+        return False
+    for proc in info["process_info"]["foreground_processes"]:
+        cmd = proc["cmdline"].strip()
+        if cmd.endswith(f"herdr-reconnect {host}") or cmd == f"herdr --remote {host}":
+            return True
+    return False
+
+
+def viewer_panes():
+    """Map of host -> local pane id currently displaying that host.
+
+    Hosts with no attached pane are absent: the panel describes panes, so a
+    detached machine should leave the sidebar rather than linger at a state
+    nothing on screen corresponds to.
+    """
+    spaces = workspaces()
+    found = {}
+    for host in ALL_HOSTS:
+        ws = spaces.get(host)
+        if ws is None:
+            continue
+        for pane in herdr("pane", "list", "--workspace", ws)["panes"]:
+            if displays_host(pane["pane_id"], host):
+                found[host] = pane["pane_id"]
+                break
+    return found
+
+
+def poll(host):
+    """Agent list from `host`'s own herdr server, or None if unreachable.
+
+    None and [] are different answers: no server or no route is `unknown`,
+    an empty list is a reachable machine running nothing.
+    """
+    try:
+        out = subprocess.run(
+            [*SSH, host, "~/.local/bin/herdr agent list"],
+            capture_output=True, text=True, timeout=SSH_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        return None
+    if out.returncode != 0:
+        return None
+    try:
+        return json.loads(out.stdout)["result"]["agents"]
+    except (ValueError, KeyError):
+        return None
+
+
+def summarize(host, agents):
+    """Reduce a host's agent list to one (state, label, message) row.
+
+    The label is what the sidebar shows, so a lone agent lends its window
+    title; several agents collapse to a count, because one row per pane is all
+    the reporting API can carry.
+    """
+    if agents is None:
+        return "unknown", host, "unreachable"
+    if not agents:
+        return "idle", host, "no agents"
+
+    state = max((a.get("agent_status", "unknown") for a in agents),
+                key=lambda s: RANK.get(s, 0))
+    if len(agents) == 1:
+        one = agents[0]
+        label = one.get("terminal_title_stripped") or one.get("agent") or host
+        return state, label, f"{host}: {state}"
+
+    tally = {}
+    for agent in agents:
+        status = agent.get("agent_status", "unknown")
+        tally[status] = tally.get(status, 0) + 1
+    detail = ", ".join(f"{n} {s}" for s, n in sorted(tally.items()))
+    return state, f"{len(agents)} agents", f"{host}: {detail}"
+
+
+def report(pane, label, state, message, seq, dry_run):
+    """Claim `pane` for `label` and set its state."""
+    args = ["pane", "report-agent", pane, "--source", SOURCE,
+            "--agent", label, "--state", state, "--message", message,
+            "--seq", str(seq)]
+    if dry_run:
+        print("herdr " + " ".join(args))
+        return
+    raw(*args)
+
+
+def release(pane, label, seq, dry_run):
+    """Drop this feed's claim on `pane`, leaving screen detection in charge."""
+    args = ["pane", "release-agent", pane, "--source", SOURCE,
+            "--agent", label, "--seq", str(seq)]
+    if dry_run:
+        print("herdr " + " ".join(args))
+        return
+    try:
+        raw(*args)
+    except RuntimeError:
+        pass  # already gone: the pane closed, or the server forgot it
+
+
+def load_state():
+    """Panes claimed by a previous run, as pane id -> label."""
+    try:
+        with open(STATE_FILE) as handle:
+            return json.load(handle)
+    except (OSError, ValueError):
+        return {}
+
+
+def save_state(claims):
+    """Persist current claims so a killed run can still be cleaned up."""
+    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+    with open(STATE_FILE, "w") as handle:
+        json.dump(claims, handle)
+
+
+def shutdown(_signum, _frame):
+    """Turn SIGTERM into the same unwind path as ctrl-c, so launchd stopping
+    this feed still releases its claims instead of freezing the sidebar."""
+    raise KeyboardInterrupt
+
+
+def cycle(claims, seq, dry_run, verbose):
+    """Poll every host once and report the results. Returns the next seq.
+
+    Mutates `claims` in place, so a caller that catches a failure partway
+    through still holds exactly what needs releasing.
+    """
+    panes = viewer_panes()
+
+    # A host detached since the last cycle still holds a claim on a pane that
+    # no longer shows it.
+    for pane in [p for p in claims if p not in panes.values()]:
+        seq += 1
+        release(pane, claims.pop(pane), seq, dry_run)
+
+    with ThreadPoolExecutor(max_workers=max(len(panes), 1)) as pool:
+        results = dict(zip(panes, pool.map(poll, panes)))
+
+    for host, pane in panes.items():
+        state, label, message = summarize(host, results[host])
+        # Identity is (source, label), so a changed label must retire the old
+        # row or it lingers forever with nothing left to update it.
+        if claims.get(pane) not in (None, label):
+            seq += 1
+            release(pane, claims[pane], seq, dry_run)
+        seq += 1
+        report(pane, label, state, message, seq, dry_run)
+        claims[pane] = label
+        if verbose:
+            print(f"  {host:<16} {state:<8} {label}", file=sys.stderr)
+
+    if not dry_run:
+        save_state(claims)
+    return seq
+
+
+def main():
+    argv = sys.argv[1:]
+    if "-h" in argv or "--help" in argv:
+        print(USAGE)
+        return 0
+    once = "--once" in argv
+    dry_run = "--dry-run" in argv
+    verbose = "-v" in argv
+
+    # Seconds since the epoch, so every report outranks anything left behind
+    # by a previous run even though the counter restarts with the process.
+    seq = int(time.time())
+    claims = load_state()
+
+    if "--clear" in argv:
+        for pane, label in claims.items():
+            seq += 1
+            release(pane, label, seq, dry_run)
+            print(f"  released {pane:<8} {label}")
+        if not dry_run:
+            save_state({})
+        return 0
+
+    # A run that was killed outright left its claims behind. They outrank
+    # screen detection, so retire them before laying down new ones.
+    if claims and not dry_run:
+        for pane, label in claims.items():
+            seq += 1
+            release(pane, label, seq, dry_run)
+        claims = {}
+        save_state(claims)
+
+    signal.signal(signal.SIGTERM, shutdown)
+    failed = False
+
+    try:
+        while True:
+            try:
+                seq = cycle(claims, seq, dry_run, verbose)
+                failed = False
+            except RuntimeError as err:
+                # The local server is down or mid-restart. Waiting beats dying:
+                # under launchd a crash loop would re-dial every host once per
+                # throttle window, and the panel is meaningless while herdr is
+                # gone regardless.
+                failed = True
+                print(f"  herdr unavailable: {err}", file=sys.stderr)
+            if once or dry_run:
+                return 1 if failed else 0
+            time.sleep(INTERVAL)
+    except KeyboardInterrupt:
+        for pane, label in claims.items():
+            seq += 1
+            release(pane, label, seq, dry_run)
+        if not dry_run:
+            save_state({})
+        return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

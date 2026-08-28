@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.dotfiles.herdr-agent-feed</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__HOME__/.local/bin/herdr-agent-feed</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <!-- The feed waits out a missing herdr rather than exiting, so a restart
+       here means a real crash; 30s keeps that from becoming a busy loop. -->
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+  <!-- launchd hands over a minimal PATH: herdr lives in Homebrew's bin and
+       ssh multiplexing needs nothing else. Without this the feed can only
+       report that it cannot find herdr. -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>__HOME__/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>__HOME__/Library/Logs/herdr-agent-feed.log</string>
+  <key>StandardErrorPath</key>
+  <string>__HOME__/Library/Logs/herdr-agent-feed.log</string>
+</dict>
+</plist>
