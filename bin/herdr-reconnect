@@ -9,18 +9,65 @@
 # the panes and keeps running regardless, so reattaching restores the same
 # session, same scrollback, same agents.
 #
+# Retrying forever is deliberate -- a laptop closed overnight should be attached
+# again by morning. What is NOT wanted is the six lines of herdr diagnosis every
+# failed attempt prints: through a real outage that buries the pane in an
+# identical wall of text, and the only visible way out is ctrl-c, which also
+# cancels the reconnect this loop exists to perform.
+#
+# So the diagnosis is printed when it is news -- the first failure of an outage,
+# or whenever the text changes -- and suppressed while it merely repeats.
+# Attempts stay visible as a single compact line, thinning out once an outage is
+# clearly not brief.
+#
 # Exit 0 means the session was left on purpose (detached from the inner herdr),
-# so the loop stops. Any other status is treated as a dropped link and retried
-# with backoff, capped so an unreachable host does not spin.
+# so the loop stops. Any other status is a dropped link.
 set -u
 host=${1:?usage: herdr-reconnect <ssh-target>}
+
+# A client that dies faster than this never finished connecting: an outage,
+# not a session that dropped, so its backoff should keep growing.
+MIN_SESSION=5
+NOISY_ATTEMPTS=3        # show every attempt this early into an outage
+THIN_EVERY=10           # after that, one line per this many attempts
+
+trap 'printf "\n[herdr-reconnect] stopped watching %s\n" "$host"; exit 130' INT TERM
+
+# fd 3 keeps the real stdout, so the client's full-screen UI still renders while
+# only its stderr is captured. Redirecting stdout instead would blank the TUI.
+exec 3>&1
+
+shown=''                # last diagnosis printed, to detect a changed message
+fails=0
 delay=1
+
 while :; do
-    if herdr --remote "$host"; then
-        exit 0
+    start=$(date +%s)
+    message=$(herdr --remote "$host" 2>&1 1>&3)
+    status=$?
+    [ "$status" -eq 0 ] && exit 0
+    ran=$(( $(date +%s) - start ))
+
+    if [ "$ran" -ge "$MIN_SESSION" ]; then
+        # A real session that dropped, not a failing connect. Start a fresh
+        # outage so the retry is immediate and its diagnosis is shown again.
+        [ "$fails" -gt 0 ] && printf '[herdr-reconnect] %s reattached, then dropped again\n' "$host"
+        shown=''
+        fails=0
+        delay=1
     fi
-    printf '\n[herdr-reconnect] %s dropped — retrying in %ss (ctrl-c to stop)\n' \
-        "$host" "$delay"
+
+    fails=$((fails + 1))
+    if [ "$message" != "$shown" ]; then
+        printf '%s\n' "$message"
+        shown=$message
+    fi
+
+    if [ "$fails" -le "$NOISY_ATTEMPTS" ] || [ $((fails % THIN_EVERY)) -eq 0 ]; then
+        printf '[herdr-reconnect] %s unreachable · attempt %s · retry in %ss (ctrl-c to stop)\n' \
+            "$host" "$fails" "$delay"
+    fi
+
     sleep "$delay"
     delay=$((delay * 2))
     [ "$delay" -gt 30 ] && delay=30

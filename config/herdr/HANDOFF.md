@@ -163,6 +163,19 @@ first-match-wins, a value in `~/.ssh/config` **overrides** herdr's and makes dro
 detection slower. Sixty-second detection is already the intended behaviour; the
 supervisor handles what follows.
 
+Failed attempts print herdr's six-line diagnosis only when it is *news* — the
+first failure of an outage, or when the text changes. Repeats are suppressed and
+each attempt shows as one compact line, thinning to every tenth once an outage is
+clearly not brief. Retrying itself is unbounded on purpose: a laptop closed
+overnight should be attached again by morning. The earlier version printed every
+line of every attempt, which through a real outage buried the pane and made
+ctrl-c look like the only way out — the one action that also cancels the
+reconnect.
+
+An attempt shorter than five seconds never finished connecting, so it counts as
+an outage and keeps growing the backoff; a longer one was a real session that
+dropped, and resets it.
+
 ### `herdr-agents`
 
 Cross-machine agent rollup: lists every agent on the Mac and all four remotes in
