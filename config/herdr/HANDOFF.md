@@ -239,11 +239,22 @@ knowing given the panes hold coding agents.
   inner session (`src/config/keybinds.rs:1029`). `--remote-keybindings server`
   does *not* help: it only selects which keymap file the remote client reads, not
   which herdr receives the keystroke.
-- **atuin rewrites `~/.claude/settings.json`.** Installing or updating atuin adds
-  its `PostToolUse`/`PostToolUseFailure` hooks and re-serialises the file with
-  keys sorted alphabetically. The diff looks alarming — whole blocks appear to
-  move or vanish — but the content is preserved; compare semantically rather than
-  by eye before concluding a guard was dropped.
+- **Installing atuin registers Claude Code hooks, uninvited.** atuin 18.20's
+  installer adds `atuin hook claude-code` to `PreToolUse`, `PostToolUse` and
+  `PostToolUseFailure` (matcher `Bash`), and re-serialises `settings.json` with
+  keys sorted alphabetically. Since that file is a symlink into `dotclaude`, a
+  routine `bootstrap.sh` quietly produced tracked-config changes on every machine
+  and put a second hook beside the git-push guard on every Bash call.
+
+  These have been removed. Note only two of the three show up as *new keys* in a
+  diff — the `PreToolUse` one is appended to the array `guard-bash.sh` already
+  occupies, so a naive key-level comparison undercounts. The alphabetical
+  re-serialisation also makes the diff look like blocks were deleted when they
+  were only moved; compare semantically before concluding a guard was dropped.
+
+  They come back on any fresh atuin install. Remove with
+  `git -C ~/dotclaude checkout -- claude/settings.json`, which restores the
+  tracked file exactly, then confirm `permissions.deny` and `guard-bash` survive.
 - **Only workspaces appear in the spaces sidebar**, not tabs. Adding a tab for a
   machine will not make it show up in that list; it needs a workspace.
 - **The daemon inherits launchd's `PATH`, not the login shell's.** It runs with
