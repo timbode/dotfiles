@@ -190,7 +190,7 @@ esac
 # rest (bootstrap runs under `set -e`; an unguarded non-zero exit here would
 # skip every later step, e.g. a broken dock.sh silently dropping keyremap.sh).
 if [[ $(uname -s) == Darwin ]]; then
-    for script in defaults dock keyremap rectangle input-sources herdr-agent-feed; do
+    for script in defaults dock keyremap rectangle input-sources; do
         bash "$DOTFILES/macos/$script.sh" || echo "  ⚠ macos/$script.sh failed — continuing"
     done
     # window-shortcuts.sh (native tiling) is intentionally NOT run here — it would
@@ -211,14 +211,7 @@ for variant in server cluster gpu; do
     ln -sfn "$DOTFILES/config/eza/$variant.yml" ~/.config/eza/$variant/theme.yml
 done
 
-# herdr's config is Darwin-only on purpose: this Mac is the hub and needs
-# allow_nested plus the agent-sidebar rows, while the remotes need the opposite
-# UI settings (collapsed sidebar, hidden tab bar) because their UI renders
-# *inside* a pane here. One shared file would break one end or the other.
 if [[ $(uname -s) == Darwin ]]; then
-    mkdir -p ~/.config/herdr
-    ln -sfn "$DOTFILES/config/herdr/config.toml" ~/.config/herdr/config.toml
-
     # iTerm dynamic profiles: one per remote, each attaching to that host's
     # tmux session. iTerm rewrites its own plist on quit but never touches this
     # folder, so a tracked file is the only way these survive.

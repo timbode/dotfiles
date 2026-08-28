@@ -1,5 +1,22 @@
 # herdr — handoff notes
 
+> **Superseded — this setup is no longer in use.**
+>
+> The remote sessions are now reached with one iTerm profile per host running
+> `ssh -t <host> tmux new -A -s main` (`config/iterm/hosts.json`). Persistence
+> was never the Mac's job: the remote multiplexer owns the panes and keeps them
+> alive regardless, which is why the local half can be an ordinary terminal tab.
+>
+> Running a multiplexer at *both* ends was the whole cost — it is what made
+> `ctrl+b` ambiguous, opened new tabs on the wrong machine, and turned a network
+> blip into a screenful of retry output. What was lost with it: the agent
+> sidebar, which only paid off with several machines busy at once.
+>
+> Kept for the herdr-specific findings below, several of which took real digging
+> and are not in the published docs. `herdr` itself is still installed on the Mac
+> and on all four remotes; nothing was uninstalled.
+
+
 Working notes for whoever (human or agent) picks this up later: what was set up,
 why it is shaped this way, and where the sharp edges are.
 
