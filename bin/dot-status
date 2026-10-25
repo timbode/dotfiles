@@ -151,7 +151,7 @@ for repo in REPOS:
     if ahead not in ("0", "?"):
         s = git(d, "log", "origin/main..HEAD", "--format=%%h %%s", "-3")
         log = s.splitlines() if s else []
-    churn, real = [], []
+    churn, real, untracked = [], [], []
     for line in (git(d, "status", "--porcelain") or "").splitlines():
         if not line.strip():
             continue
@@ -167,10 +167,11 @@ for repo in REPOS:
                         continue
             except Exception:
                 pass  # unparseable => treat as real; never silently absolve
-        real.append(("untracked " + path) if code == "??" else path)
+        (untracked if code == "??" else real).append(path)
     repos.append({"repo": repo, "branch": git(d, "rev-parse", "--abbrev-ref", "HEAD"),
                   "behind": behind, "ahead": ahead, "log": log,
-                  "churn": churn, "real": real, "links": links_for(repo)})
+                  "churn": churn, "real": real, "untracked": untracked,
+                  "links": links_for(repo)})
 print(%r + json.dumps({"machine_type": machine_type, "repos": repos}))
 ''' % (VOLATILE, VOLATILE_PERM, REPOS, DOTFILES_LINKS, DARWIN_LINKS, MARK)
 
@@ -210,7 +211,7 @@ def main():
     print(f"{'machine':<16} {'repo':<10} {'branch':<20} {'sync':<18} "
           f"{'setup':<14} working tree")
     print("-" * 104)
-    stranded, needs_review, todo = [], [], {}
+    stranded, needs_review, skipped, todo = [], [], [], {}
 
     for (name, _), res in zip(machines, results):
         if "error" in res:
@@ -230,17 +231,27 @@ def main():
             if r["churn"]:
                 tree.append("churn: " + (", ".join(r["churn"]) if verbose
                                          else f"{len(r['churn'])} file(s)"))
-            if r["real"]:
-                tree.append("REVIEW: " + ", ".join(r["real"]))
+            review = r["real"] + ["untracked " + p for p in r["untracked"]]
+            if review:
+                tree.append("REVIEW: " + ", ".join(review))
             print(f"{name:<16} {r['repo']:<10} {r['branch']:<20} {sync:<18} "
                   f"{setup:<14} {'; '.join(tree) or 'clean'}")
 
             if ahead not in ("0", "?"):
                 stranded += [(name, r["repo"], c) for c in r["log"]]
+            needs_review += [(name, r["repo"], f) for f in review]
+            # Only what would make the suggested commands fail or need a human
+            # blocks them: a diverged history (fast-forward is impossible) or an
+            # edited tracked file. An untracked file never does -- pull --ff-only
+            # aborts on its own if an incoming commit would overwrite one.
+            why = []
+            if behind not in ("0", "?") and ahead not in ("0", "?"):
+                why.append("diverged, a fast-forward is impossible")
             if r["real"]:
-                needs_review += [(name, r["repo"], f) for f in r["real"]]
-            if r["real"]:
-                continue  # a real edit blocks any automated reconcile
+                why.append("edited tracked file: " + ", ".join(r["real"]))
+            if why:
+                skipped.append((name, r["repo"], "; ".join(why)))
+                continue
             if behind not in ("0", "?") or links:
                 todo.setdefault(name, {"type": res.get("machine_type")})[r["repo"]] = {
                     "behind": behind, "churn": r["churn"], "links": links}
@@ -257,10 +268,12 @@ def main():
     if not stranded and not needs_review and not todo:
         print("Everything in sync and applied.")
 
-    if suggest and todo:
+    if suggest and (todo or skipped):
         print("\n--- suggested commands (NOT run; pushing and merging are yours) ---")
         for name, repo, c in stranded:
             print(f"  # {name}/{repo} holds {c.split()[0]} — land it before resetting that machine")
+        for name, repo, why in skipped:
+            print(f"  # not suggested for {name}/{repo}: {why}")
 
         lines = []
         for name, repos in todo.items():
