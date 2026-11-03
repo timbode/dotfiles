@@ -5,9 +5,9 @@
       "Command" : "ssh -t quicopt tmux -CC new -A -s main",
       "Shortcut" : "1",
       "Close Sessions On End" : false,
-      "Custom Command" : "Yes",
       "Guid" : "dotfiles-quicopt",
-      "Name" : "quicopt"
+      "Name" : "quicopt",
+      "Custom Command" : "Yes"
     },
     {
       "Rewritable" : true,
@@ -15,35 +15,41 @@
       "Shortcut" : "2",
       "Close Sessions On End" : false,
       "Guid" : "dotfiles-simulations_tb",
-      "Name" : "simulations_tb",
-      "Custom Command" : "Yes"
+      "Custom Command" : "Yes",
+      "Name" : "simulations_tb"
     },
     {
       "Rewritable" : true,
       "Command" : "ssh -t quicoptapi tmux -CC new -A -s main",
-      "Shortcut" : "3",
+      "Window Type" : 0,
       "Close Sessions On End" : false,
       "Guid" : "dotfiles-quicoptapi",
       "Custom Command" : "Yes",
-      "Name" : "quicoptapi"
+      "Shortcut" : "4",
+      "Name" : "quicoptapi",
+      "Use Separate Colors for Light and Dark Mode" : true
     },
     {
       "Rewritable" : true,
       "Command" : "ssh -t tryquicoptapi tmux -CC new -A -s main",
-      "Shortcut" : "4",
+      "Window Type" : 0,
       "Close Sessions On End" : false,
       "Custom Command" : "Yes",
       "Name" : "tryquicoptapi",
-      "Guid" : "dotfiles-tryquicoptapi"
+      "Shortcut" : "5",
+      "Guid" : "dotfiles-tryquicoptapi",
+      "Use Separate Colors for Light and Dark Mode" : true
     },
     {
       "Rewritable" : true,
       "Command" : "ssh -t platform-1 tmux -CC new -A -s main",
-      "Shortcut" : "5",
+      "Window Type" : 0,
       "Close Sessions On End" : false,
+      "Guid" : "dotfiles-platform-1",
       "Custom Command" : "Yes",
       "Name" : "platform-1",
-      "Guid" : "dotfiles-platform-1"
+      "Shortcut" : "3",
+      "Use Separate Colors for Light and Dark Mode" : true
     }
   ]
 }
