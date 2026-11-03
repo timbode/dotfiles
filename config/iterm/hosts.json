@@ -7,7 +7,31 @@
       "Close Sessions On End" : false,
       "Guid" : "dotfiles-quicopt",
       "Name" : "quicopt",
-      "Custom Command" : "Yes"
+      "Custom Command" : "Yes",
+      "Use Tab Color" : true,
+      "Tab Color" : {
+        "Red Component" : 0.11764705882352941,
+        "Green Component" : 0.5333333333333333,
+        "Blue Component" : 0.8980392156862745,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      },
+      "Use Tab Color (Light)" : true,
+      "Tab Color (Light)" : {
+        "Red Component" : 0.11764705882352941,
+        "Green Component" : 0.5333333333333333,
+        "Blue Component" : 0.8980392156862745,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      },
+      "Use Tab Color (Dark)" : true,
+      "Tab Color (Dark)" : {
+        "Red Component" : 0.11764705882352941,
+        "Green Component" : 0.5333333333333333,
+        "Blue Component" : 0.8980392156862745,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      }
     },
     {
       "Rewritable" : true,
@@ -16,7 +40,31 @@
       "Close Sessions On End" : false,
       "Guid" : "dotfiles-simulations_tb",
       "Custom Command" : "Yes",
-      "Name" : "simulations_tb"
+      "Name" : "simulations_tb",
+      "Use Tab Color" : true,
+      "Tab Color" : {
+        "Red Component" : 0.48627450980392156,
+        "Green Component" : 0.22745098039215686,
+        "Blue Component" : 0.9294117647058824,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      },
+      "Use Tab Color (Light)" : true,
+      "Tab Color (Light)" : {
+        "Red Component" : 0.48627450980392156,
+        "Green Component" : 0.22745098039215686,
+        "Blue Component" : 0.9294117647058824,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      },
+      "Use Tab Color (Dark)" : true,
+      "Tab Color (Dark)" : {
+        "Red Component" : 0.48627450980392156,
+        "Green Component" : 0.22745098039215686,
+        "Blue Component" : 0.9294117647058824,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      }
     },
     {
       "Rewritable" : true,
@@ -27,7 +75,31 @@
       "Custom Command" : "Yes",
       "Shortcut" : "4",
       "Name" : "quicoptapi",
-      "Use Separate Colors for Light and Dark Mode" : true
+      "Use Separate Colors for Light and Dark Mode" : true,
+      "Use Tab Color" : true,
+      "Tab Color" : {
+        "Red Component" : 0.050980392156862744,
+        "Green Component" : 0.5803921568627451,
+        "Blue Component" : 0.5333333333333333,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      },
+      "Use Tab Color (Light)" : true,
+      "Tab Color (Light)" : {
+        "Red Component" : 0.050980392156862744,
+        "Green Component" : 0.5803921568627451,
+        "Blue Component" : 0.5333333333333333,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      },
+      "Use Tab Color (Dark)" : true,
+      "Tab Color (Dark)" : {
+        "Red Component" : 0.050980392156862744,
+        "Green Component" : 0.5803921568627451,
+        "Blue Component" : 0.5333333333333333,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      }
     },
     {
       "Rewritable" : true,
@@ -38,7 +110,31 @@
       "Name" : "tryquicoptapi",
       "Shortcut" : "5",
       "Guid" : "dotfiles-tryquicoptapi",
-      "Use Separate Colors for Light and Dark Mode" : true
+      "Use Separate Colors for Light and Dark Mode" : true,
+      "Use Tab Color" : true,
+      "Tab Color" : {
+        "Red Component" : 0.050980392156862744,
+        "Green Component" : 0.5803921568627451,
+        "Blue Component" : 0.5333333333333333,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      },
+      "Use Tab Color (Light)" : true,
+      "Tab Color (Light)" : {
+        "Red Component" : 0.050980392156862744,
+        "Green Component" : 0.5803921568627451,
+        "Blue Component" : 0.5333333333333333,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      },
+      "Use Tab Color (Dark)" : true,
+      "Tab Color (Dark)" : {
+        "Red Component" : 0.050980392156862744,
+        "Green Component" : 0.5803921568627451,
+        "Blue Component" : 0.5333333333333333,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      }
     },
     {
       "Rewritable" : true,
@@ -49,7 +145,31 @@
       "Custom Command" : "Yes",
       "Name" : "platform-1",
       "Shortcut" : "3",
-      "Use Separate Colors for Light and Dark Mode" : true
+      "Use Separate Colors for Light and Dark Mode" : true,
+      "Use Tab Color" : true,
+      "Tab Color" : {
+        "Red Component" : 0.7607843137254902,
+        "Green Component" : 0.4392156862745098,
+        "Blue Component" : 0.6039215686274509,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      },
+      "Use Tab Color (Light)" : true,
+      "Tab Color (Light)" : {
+        "Red Component" : 0.7607843137254902,
+        "Green Component" : 0.4392156862745098,
+        "Blue Component" : 0.6039215686274509,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      },
+      "Use Tab Color (Dark)" : true,
+      "Tab Color (Dark)" : {
+        "Red Component" : 0.7607843137254902,
+        "Green Component" : 0.4392156862745098,
+        "Blue Component" : 0.6039215686274509,
+        "Alpha Component" : 1,
+        "Color Space" : "sRGB"
+      }
     }
   ]
 }
