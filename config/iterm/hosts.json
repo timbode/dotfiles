@@ -1,36 +1,49 @@
 {
-  "Profiles": [
+  "Profiles" : [
     {
-      "Name": "quicopt",
-      "Guid": "dotfiles-quicopt",
-      "Custom Command": "Yes",
-      "Command": "ssh -t quicopt tmux -CC new -A -s main",
-      "Close Sessions On End": false,
-      "Shortcut": "1"
+      "Rewritable" : true,
+      "Command" : "ssh -t quicopt tmux -CC new -A -s main",
+      "Shortcut" : "1",
+      "Close Sessions On End" : false,
+      "Custom Command" : "Yes",
+      "Guid" : "dotfiles-quicopt",
+      "Name" : "quicopt"
     },
     {
-      "Name": "simulations_tb",
-      "Guid": "dotfiles-simulations_tb",
-      "Custom Command": "Yes",
-      "Command": "ssh -t simulations_tb tmux -CC new -A -s main",
-      "Close Sessions On End": false,
-      "Shortcut": "2"
+      "Rewritable" : true,
+      "Command" : "ssh -t simulations_tb tmux -CC new -A -s main",
+      "Shortcut" : "2",
+      "Close Sessions On End" : false,
+      "Guid" : "dotfiles-simulations_tb",
+      "Name" : "simulations_tb",
+      "Custom Command" : "Yes"
     },
     {
-      "Name": "quicoptapi",
-      "Guid": "dotfiles-quicoptapi",
-      "Custom Command": "Yes",
-      "Command": "ssh -t quicoptapi tmux -CC new -A -s main",
-      "Close Sessions On End": false,
-      "Shortcut": "3"
+      "Rewritable" : true,
+      "Command" : "ssh -t quicoptapi tmux -CC new -A -s main",
+      "Shortcut" : "3",
+      "Close Sessions On End" : false,
+      "Guid" : "dotfiles-quicoptapi",
+      "Custom Command" : "Yes",
+      "Name" : "quicoptapi"
     },
     {
-      "Name": "tryquicoptapi",
-      "Guid": "dotfiles-tryquicoptapi",
-      "Custom Command": "Yes",
-      "Command": "ssh -t tryquicoptapi tmux -CC new -A -s main",
-      "Close Sessions On End": false,
-      "Shortcut": "4"
+      "Rewritable" : true,
+      "Command" : "ssh -t tryquicoptapi tmux -CC new -A -s main",
+      "Shortcut" : "4",
+      "Close Sessions On End" : false,
+      "Custom Command" : "Yes",
+      "Name" : "tryquicoptapi",
+      "Guid" : "dotfiles-tryquicoptapi"
+    },
+    {
+      "Rewritable" : true,
+      "Command" : "ssh -t platform-1 tmux -CC new -A -s main",
+      "Shortcut" : "5",
+      "Close Sessions On End" : false,
+      "Custom Command" : "Yes",
+      "Name" : "platform-1",
+      "Guid" : "dotfiles-platform-1"
     }
   ]
 }
