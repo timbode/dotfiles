@@ -94,17 +94,29 @@ install_linux() {
     fi
 
     # ── default shell ─────────────────────────────────────────────────────────
-    if [[ "$(basename "$SHELL")" != "zsh" ]]; then
+    # Check the passwd entry, not $SHELL: $SHELL is the shell this session was
+    # started with, so it still says bash after a successful chsh until the next
+    # login, and a re-run would prompt for a password to change nothing.
+    if [[ "$(basename "$(getent passwd "$USER" | cut -d: -f7)")" != "zsh" ]]; then
         echo "→ setting default shell to zsh"
         chsh -s "$(command -v zsh)" || \
             echo "  chsh failed — run manually: chsh -s $(command -v zsh)"
     fi
 
-    if ! command -v eza &>/dev/null; then
+    # Release assets are per-architecture; eza and glab name them differently.
+    case "$(uname -m)" in
+        x86_64)         EZA_ARCH=x86_64;  GLAB_ARCH=amd64 ;;
+        aarch64|arm64)  EZA_ARCH=aarch64; GLAB_ARCH=arm64 ;;
+        *) echo "  ⚠ unsupported arch $(uname -m) — eza/glab will fail" ;;
+    esac
+
+    # `--version` rather than `command -v`: a binary for the wrong architecture
+    # is on PATH but won't run, and should be replaced rather than kept.
+    if ! eza --version &>/dev/null; then
         echo "→ installing eza"
         mkdir -p ~/.local/bin
         EZA_URL=$(curl -s https://api.github.com/repos/eza-community/eza/releases/latest \
-            | grep "browser_download_url.*eza_x86_64-unknown-linux-gnu.tar.gz\"" \
+            | grep "browser_download_url.*eza_${EZA_ARCH}-unknown-linux-gnu.tar.gz\"" \
             | sed 's/.*"\(https[^"]*\)".*/\1/')
         curl -fsSL "$EZA_URL" | tar xz -C /tmp
         mv /tmp/eza ~/.local/bin/eza
@@ -131,13 +143,13 @@ install_linux() {
         ~/.fzf/install --bin   # binary only; tools.zsh handles shell integration
     fi
 
-    if ! command -v glab &>/dev/null; then
+    if ! glab --version &>/dev/null; then
         echo "→ installing glab"
         GLAB_TAG=$(curl -s "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases" \
             | grep -o '"tag_name":"[^"]*"' | head -1 | sed 's/"tag_name":"//;s/"//')
         GLAB_VER="${GLAB_TAG#v}"
         GLAB_TMP=$(mktemp -d)
-        curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/${GLAB_TAG}/downloads/glab_${GLAB_VER}_linux_amd64.tar.gz" \
+        curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/${GLAB_TAG}/downloads/glab_${GLAB_VER}_linux_${GLAB_ARCH}.tar.gz" \
             | tar xz -C "$GLAB_TMP"
         mv "$GLAB_TMP/bin/glab" ~/.local/bin/glab
         rm -rf "$GLAB_TMP"
