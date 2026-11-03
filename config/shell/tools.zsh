@@ -134,3 +134,12 @@ if command -v starship &>/dev/null; then
     esac
     eval "$(starship init zsh)"
 fi
+
+# ── iTerm tab colour on the Mac ───────────────────────────────────────────────
+# The SSH profiles in config/iterm/hosts.json carry their machine's colour, but
+# a plain new tab opens with iTerm's untracked Default profile and has none.
+# Tint it with the mac theme's amber (#d79921, as in macos/tab-colors.sh) using
+# iTerm's tab-colour escape sequence.
+if [[ "${MACHINE_TYPE:-mac}" == mac && "$TERM_PROGRAM" == iTerm.app ]]; then
+    printf '\e]6;1;bg;red;brightness;215\a\e]6;1;bg;green;brightness;153\a\e]6;1;bg;blue;brightness;33\a'
+fi
