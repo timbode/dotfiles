@@ -65,6 +65,23 @@ case "${MACHINE_TYPE:-mac}" in
         _ec+=":Gm=38;2;167;139;250:Go=38;2;109;40;217:Gc=38;2;167;139;250:Gd=38;2;139;92;246"
         export EZA_COLORS="$_ec"; unset _ec
         ;;
+    cloud)
+        # Pastel pink palette — dir=#f472b6  date/kilo=#fbcfe8  user=#f9a8d4
+        _ec="reset"
+        _ec+=":di=1;38;2;244;114;182:ex=1;38;2;251;207;232:ln=1;38;2;252;231;243"
+        _ec+=":pi=38;2;236;72;153:bd=38;2;248;113;113:cd=38;2;248;113;113:so=38;2;219;39;119"
+        _ec+=":hd=1;4;38;2;244;114;182:da=38;2;251;207;232"
+        _ec+=":uu=1;38;2;249;168;212:un=2;38;2;249;168;212:gu=38;2;244;114;182:gn=2;38;2;249;168;212"
+        _ec+=":nk=38;2;251;207;232:nm=38;2;249;168;212:ng=38;2;244;114;182:nt=38;2;236;72;153"
+        _ec+=":uk=2;38;2;249;168;212:um=2;38;2;249;168;212:ug=2;38;2;249;168;212:ut=2;38;2;249;168;212"
+        _ec+=":uw=38;2;252;231;243:ux=38;2;248;113;113"
+        _ec+=":gr=2;38;2;249;168;212:gw=2;38;2;249;168;212:gx=2;38;2;249;168;212"
+        _ec+=":tr=2;38;2;249;168;212:tw=2;38;2;249;168;212:tx=2;38;2;249;168;212:xx=2;38;2;249;168;212"
+        _ec+=":ga=1;38;2;251;207;232:gm=38;2;249;168;212:gd=38;2;248;113;113:gv=38;2;252;231;243"
+        _ec+=":gt=38;2;236;72;153:gi=2;38;2;249;168;212:gc=1;38;2;248;113;113"
+        _ec+=":Gm=38;2;251;207;232:Go=38;2;236;72;153:Gc=38;2;251;207;232:Gd=38;2;249;168;212"
+        export EZA_COLORS="$_ec"; unset _ec
+        ;;
     *)
         # Warm amber (mac) — dir=#d79921  date/kilo=#689d6a  user=#d79921
         _ec="reset"
@@ -109,6 +126,7 @@ if command -v starship &>/dev/null; then
     case "${MACHINE_TYPE:-mac}" in
         server)  export STARSHIP_CONFIG="$HOME/.config/starship/server.toml"  ;;
         cluster) export STARSHIP_CONFIG="$HOME/.config/starship/cluster.toml" ;;
+        cloud)   export STARSHIP_CONFIG="$HOME/.config/starship/cloud.toml"   ;;
         gpu)     export STARSHIP_CONFIG="$HOME/.config/starship/gpu.toml"     ;;
         *)       export STARSHIP_CONFIG="$HOME/.config/starship/mac.toml"     ;;
     esac

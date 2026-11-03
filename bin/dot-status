@@ -63,9 +63,9 @@ DOTFILES_LINKS = {
     ".config/eza/theme.yml": "config/eza/theme.yml",
     ".config/atuin/config.toml": "config/atuin/config.toml",
     **{f".config/starship/{v}.toml": f"config/starship/{v}.toml"
-       for v in ("mac", "server", "cluster", "gpu")},
+       for v in ("mac", "server", "cluster", "gpu", "cloud")},
     **{f".config/eza/{v}/theme.yml": f"config/eza/{v}.yml"
-       for v in ("server", "cluster", "gpu")},
+       for v in ("server", "cluster", "gpu", "cloud")},
 }
 
 # Links bootstrap.sh only creates on Darwin. Auditing these everywhere would

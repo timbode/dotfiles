@@ -110,5 +110,5 @@ one cause.
 
 - Reference machine: macOS **26.5.1** (Tahoe), Apple Silicon (Homebrew at
   `/opt/homebrew`). Login shell zsh. User is German (US + German layouts).
-- Repo is multi-machine: `bash bootstrap.sh <mac|server|cluster|gpu>`. The new
+- Repo is multi-machine: `bash bootstrap.sh <mac|server|cluster|gpu|cloud>`. The new
   `macos/` layer is Darwin-only and no-ops elsewhere.

@@ -1,0 +1,88 @@
+# Pastel pink palette — matches starship cloud palette
+# Reference: https://github.com/eza-community/eza/blob/main/man/eza_colors-explanation.5.md
+
+colourful: true
+
+filekinds:
+  # directory, symlink, executable omitted — EZA_COLORS controls these per machine
+  pipe:         { foreground: "#ec4899" }
+  block_device: { foreground: "#f87171" }
+  char_device:  { foreground: "#f87171" }
+  socket:       { foreground: "#db2777" }
+  special:      { foreground: "#db2777" }
+  mount_point:  { foreground: "#fbcfe8", is_bold: true }
+
+perms:
+  user_write:                          { foreground: "#fce7f3" }
+  user_execute_file:                   { foreground: "#f87171" }
+  user_execute_other:                  { foreground: "#f87171" }
+  user_readwrite_execute_mountpoint:   { foreground: "#fbcfe8" }
+  group_read:                          { foreground: "#f9a8d4", is_dimmed: true }
+  group_write:                         { foreground: "#f9a8d4", is_dimmed: true }
+  group_execute:                       { foreground: "#f9a8d4", is_dimmed: true }
+  other_read:                          { foreground: "#f9a8d4", is_dimmed: true }
+  other_write:                         { foreground: "#f9a8d4", is_dimmed: true }
+  other_execute:                       { foreground: "#f9a8d4", is_dimmed: true }
+  special_user_file:                   { foreground: "#fce7f3" }
+  special_other:                       { foreground: "#f9a8d4", is_dimmed: true }
+  attribute:                           { foreground: "#f9a8d4", is_dimmed: true }
+
+size:
+  major:        { foreground: "#f9a8d4", is_dimmed: true }
+  minor:        { foreground: "#f9a8d4", is_dimmed: true }
+  number_kilo:  { foreground: "#fbcfe8" }
+  number_mega:  { foreground: "#f9a8d4" }
+  number_giga:  { foreground: "#f472b6" }
+  number_huge:  { foreground: "#ec4899" }
+  unit_byte:    { foreground: "#f9a8d4", is_dimmed: true }
+  unit_kilo:    { foreground: "#f9a8d4", is_dimmed: true }
+  unit_mega:    { foreground: "#f9a8d4", is_dimmed: true }
+  unit_giga:    { foreground: "#f9a8d4", is_dimmed: true }
+  unit_huge:    { foreground: "#f9a8d4", is_dimmed: true }
+
+users:
+  user_you:     { foreground: "#f9a8d4", is_bold: true }
+  user_root:    { foreground: "#f87171", is_bold: true }
+  user_other:   { foreground: "#f9a8d4", is_dimmed: true }
+  group_yours:  { foreground: "#f472b6" }
+  group_other:  { foreground: "#f9a8d4", is_dimmed: true }
+  group_root:   { foreground: "#f87171" }
+
+links:
+  normal:          { foreground: "#fbcfe8" }
+  multi_link_file: { foreground: "#fce7f3" }
+
+git:
+  new:        { foreground: "#fbcfe8", is_bold: true }
+  modified:   { foreground: "#f9a8d4" }
+  deleted:    { foreground: "#f87171" }
+  renamed:    { foreground: "#fce7f3" }
+  typechange: { foreground: "#ec4899" }
+  ignored:    { foreground: "#f9a8d4", is_dimmed: true }
+  conflicted: { foreground: "#f87171", is_bold: true }
+
+git_repo:
+  branch_main:  { foreground: "#fbcfe8" }
+  branch_other: { foreground: "#ec4899" }
+  git_clean:    { foreground: "#fbcfe8" }
+  git_dirty:    { foreground: "#f9a8d4" }
+
+file_type:
+  image:      { foreground: "#fce7f3" }
+  video:      { foreground: "#ec4899" }
+  music:      { foreground: "#fbcfe8" }
+  lossless:   { foreground: "#fbcfe8" }
+  crypto:     { foreground: "#f87171" }
+  document:   { foreground: "#f9a8d4" }
+  compressed: { foreground: "#f472b6" }
+  temp:       { foreground: "#f9a8d4", is_dimmed: true }
+  compiled:   { foreground: "#db2777" }
+  build:      { foreground: "#fbcfe8" }
+
+punctuation: { foreground: "#f9a8d4", is_dimmed: true }
+date:        { foreground: "#fbcfe8" }
+inode:       { foreground: "#f9a8d4", is_dimmed: true }
+blocks:      { foreground: "#f9a8d4", is_dimmed: true }
+header:      { foreground: "#f472b6", is_bold: true, is_underline: true }
+octal:       { foreground: "#ec4899" }
+flags:       { foreground: "#ec4899" }

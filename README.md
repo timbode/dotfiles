@@ -24,6 +24,7 @@ Each machine type gets a fully monochromatic colour palette applied consistently
 | `server` | deep teal | `#0d9488` teal-600 | `#0d9488` |
 | `cluster` | deep violet | `#7c3aed` violet-600 | `#7c3aed` |
 | `gpu` | deep blue | `#1e88e5` blue-600 | `#1e88e5` |
+| `cloud` | pastel pink | `#c2709a` pastel rose | `#f472b6` |
 
 The colour is set once in `MACHINE_TYPE` (written by bootstrap, not in this repo) and picked up by both starship and `EZA_COLORS` at shell startup.
 
@@ -32,7 +33,7 @@ The colour is set once in `MACHINE_TYPE` (written by bootstrap, not in this repo
 ```bash
 git clone https://github.com/YOU/dotfiles ~/dotfiles
 cd ~/dotfiles
-bash bootstrap.sh <mac|server|cluster|gpu>
+bash bootstrap.sh <mac|server|cluster|gpu|cloud>
 ```
 
 The script will:
@@ -108,10 +109,10 @@ These live in the machine's own `~/.zshrc` and are not managed here:
 bootstrap.sh                  install script
 config/
   shell/tools.zsh             sourced at the bottom of ~/.zshrc; sets EZA_COLORS per machine
-  starship/{mac,server,cluster,gpu}.toml
+  starship/{mac,server,cluster,gpu,cloud}.toml
   eza/
     theme.yml                 minimal shared base (colourful + file_type only)
-    {server,cluster,gpu}.yml  per-machine theme files (symlinking handled by bootstrap)
+    {server,cluster,gpu,cloud}.yml per-machine theme files (symlinking handled by bootstrap)
   atuin/config.toml
 macos/                        macOS-only (Darwin); run from bootstrap.sh
   defaults.sh                 system preferences via `defaults write`
