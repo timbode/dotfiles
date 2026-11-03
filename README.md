@@ -80,6 +80,11 @@ On `mac`, `bootstrap.sh` also applies system preferences via `macos/`:
   manually). Re-capture after changes: `defaults export com.knollsoft.Rectangle macos/rectangle.plist && plutil -convert xml1 macos/rectangle.plist`.
 - `macos/input-sources.sh` — enables **ABC (US) + German** keyboard layouts.
   Takes effect after a logout.
+- `macos/tab-colors.sh` — installs a **Dotfiles** colour palette with the main
+  colour of each prompt theme (mac amber, server teal, cluster purple, gpu blue,
+  cloud pink). To tint an iTerm tab: right-click the tab ▸ Tab Color ▸ Other…,
+  then pick from the *Dotfiles* list under the picker's Color Palettes tab. The
+  colours mirror each theme's directory background in `config/starship/`.
 - `macos/window-shortcuts.sh` — **opt-in alternative**, NOT run by bootstrap.
   Maps Ctrl+Option+Arrows onto native `Window ▸ Move & Resize` halves. Only for
   going Rectangle-free; it has no cross-display or cycling support and would

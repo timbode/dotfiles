@@ -202,7 +202,7 @@ esac
 # rest (bootstrap runs under `set -e`; an unguarded non-zero exit here would
 # skip every later step, e.g. a broken dock.sh silently dropping keyremap.sh).
 if [[ $(uname -s) == Darwin ]]; then
-    for script in defaults dock keyremap rectangle input-sources; do
+    for script in defaults dock keyremap rectangle input-sources tab-colors; do
         bash "$DOTFILES/macos/$script.sh" || echo "  ⚠ macos/$script.sh failed — continuing"
     done
     # window-shortcuts.sh (native tiling) is intentionally NOT run here — it would
