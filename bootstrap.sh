@@ -215,6 +215,15 @@ mkdir -p ~/.config/{starship,eza,atuin,shell}
 ln -sfn "$DOTFILES/config/shell/tools.zsh"         ~/.config/shell/tools.zsh
 ln -sfn "$DOTFILES/config/eza/theme.yml"            ~/.config/eza/theme.yml
 ln -sfn "$DOTFILES/config/atuin/config.toml"        ~/.config/atuin/config.toml
+# Newer atuin installers (Linux) create ~/.atuin/config.toml, and once that
+# exists atuin reads it and ignores ~/.config/atuin entirely. Link ours there
+# too, keeping any generated file as a backup rather than discarding it.
+if [[ -d ~/.atuin ]]; then
+    if [[ -f ~/.atuin/config.toml && ! -L ~/.atuin/config.toml ]]; then
+        mv ~/.atuin/config.toml ~/.atuin/config.toml.bak.$(date +%Y%m%d_%H%M%S)
+    fi
+    ln -sfn "$DOTFILES/config/atuin/config.toml" ~/.atuin/config.toml
+fi
 for variant in mac server cluster gpu cloud; do
     ln -sfn "$DOTFILES/config/starship/$variant.toml" ~/.config/starship/$variant.toml
 done

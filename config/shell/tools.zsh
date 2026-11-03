@@ -116,8 +116,10 @@ command -v fzf &>/dev/null && source <(fzf --zsh)
 command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
 
 # ── atuin: synced history, rebinds Ctrl-R and Up ─────────────────────────────
-# installer drops the binary in ~/.atuin/bin; source its env to get it into PATH
-[[ -f "$HOME/.atuin/bin/env" ]] && source "$HOME/.atuin/bin/env"
+# The Linux installer drops the binary in ~/.atuin/bin. Older installers also
+# wrote ~/.atuin/bin/env to put it on PATH, but current ones (cargo-dist) don't,
+# so add the directory directly instead of relying on that file.
+[[ -d "$HOME/.atuin/bin" ]] && export PATH="$HOME/.atuin/bin:$PATH"
 command -v atuin &>/dev/null && eval "$(atuin init zsh)"
 
 # ── starship: pick palette by machine type ────────────────────────────────────

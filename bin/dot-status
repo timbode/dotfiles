@@ -120,6 +120,10 @@ def links_for(repo):
         wanted = dict(DOTFILES_LINKS)
         if platform.system() == "Darwin":
             wanted.update(DARWIN_LINKS)
+        # Newer atuin installs read ~/.atuin/config.toml instead of ~/.config/atuin;
+        # bootstrap.sh links it only where that directory exists.
+        if os.path.isdir(os.path.join(H, ".atuin")):
+            wanted[".atuin/config.toml"] = "config/atuin/config.toml"
         pairs = [(os.path.join(H, dest), os.path.join(d, rel))
                  for dest, rel in sorted(wanted.items())]
         # bin/ is linked into ~/.local/bin by bootstrap.sh
