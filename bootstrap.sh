@@ -213,8 +213,10 @@ done
 
 if [[ $(uname -s) == Darwin ]]; then
     # iTerm dynamic profiles: one per remote, each attaching to that host's
-    # tmux session. iTerm rewrites its own plist on quit but never touches this
-    # folder, so a tracked file is the only way these survive.
+    # tmux session. iTerm rewrites its own plist on quit, so a tracked file
+    # symlinked into this folder is the only way these survive. The profiles
+    # are marked "Rewritable", so edits made in iTerm's settings land in the
+    # tracked file and show up as a diff here.
     itermdir="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
     mkdir -p "$itermdir"
     ln -sfn "$DOTFILES/config/iterm/hosts.json" "$itermdir/hosts.json"
