@@ -241,6 +241,11 @@ if [[ $(uname -s) == Darwin ]]; then
     itermdir="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
     mkdir -p "$itermdir"
     ln -sfn "$DOTFILES/config/iterm/hosts.json" "$itermdir/hosts.json"
+    # The profiles attach with `tmux -CC`, and iTerm then shows the tmux windows
+    # as tabs while it hides the tab running ssh. By default those tabs use a
+    # shared profile named "tmux", which has no tab colour. With this setting
+    # off, they take the host profile's settings, including its tab colour.
+    defaults write com.googlecode.iterm2 TmuxUsesDedicatedProfile -bool false
 fi
 
 # ── link repo scripts into ~/.local/bin ───────────────────────────────────────
