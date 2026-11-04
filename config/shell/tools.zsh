@@ -138,8 +138,8 @@ fi
 # ── iTerm tab colour on the Mac ───────────────────────────────────────────────
 # The SSH profiles in config/iterm/hosts.json carry their machine's colour, but
 # a plain new tab opens with iTerm's untracked Default profile and has none.
-# Tint it with the mac theme's amber (#d79921, as in macos/tab-colors.sh) using
-# iTerm's tab-colour escape sequence.
+# Tint it with the mac tab colour, a dark amber (#835a03, as in
+# macos/tab-colors.sh), using iTerm's tab-colour escape sequence.
 if [[ "${MACHINE_TYPE:-mac}" == mac && "$TERM_PROGRAM" == iTerm.app ]]; then
-    printf '\e]6;1;bg;red;brightness;215\a\e]6;1;bg;green;brightness;153\a\e]6;1;bg;blue;brightness;33\a'
+    printf '\e]6;1;bg;red;brightness;131\a\e]6;1;bg;green;brightness;90\a\e]6;1;bg;blue;brightness;3\a'
 fi

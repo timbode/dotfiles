@@ -10,25 +10,25 @@
       "Custom Command" : "Yes",
       "Use Tab Color" : true,
       "Tab Color" : {
-        "Red Component" : 0.11764705882352941,
-        "Green Component" : 0.5333333333333333,
-        "Blue Component" : 0.8980392156862745,
+        "Red Component" : 0.0,
+        "Green Component" : 0.396078431372549,
+        "Blue Component" : 0.6980392156862745,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       },
       "Use Tab Color (Light)" : true,
       "Tab Color (Light)" : {
-        "Red Component" : 0.11764705882352941,
-        "Green Component" : 0.5333333333333333,
-        "Blue Component" : 0.8980392156862745,
+        "Red Component" : 0.0,
+        "Green Component" : 0.396078431372549,
+        "Blue Component" : 0.6980392156862745,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       },
       "Use Tab Color (Dark)" : true,
       "Tab Color (Dark)" : {
-        "Red Component" : 0.11764705882352941,
-        "Green Component" : 0.5333333333333333,
-        "Blue Component" : 0.8980392156862745,
+        "Red Component" : 0.0,
+        "Green Component" : 0.396078431372549,
+        "Blue Component" : 0.6980392156862745,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       }
@@ -43,25 +43,25 @@
       "Name" : "simulations_tb",
       "Use Tab Color" : true,
       "Tab Color" : {
-        "Red Component" : 0.48627450980392156,
-        "Green Component" : 0.22745098039215686,
-        "Blue Component" : 0.9294117647058824,
+        "Red Component" : 0.42745098039215684,
+        "Green Component" : 0.1568627450980392,
+        "Blue Component" : 0.8509803921568627,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       },
       "Use Tab Color (Light)" : true,
       "Tab Color (Light)" : {
-        "Red Component" : 0.48627450980392156,
-        "Green Component" : 0.22745098039215686,
-        "Blue Component" : 0.9294117647058824,
+        "Red Component" : 0.42745098039215684,
+        "Green Component" : 0.1568627450980392,
+        "Blue Component" : 0.8509803921568627,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       },
       "Use Tab Color (Dark)" : true,
       "Tab Color (Dark)" : {
-        "Red Component" : 0.48627450980392156,
-        "Green Component" : 0.22745098039215686,
-        "Blue Component" : 0.9294117647058824,
+        "Red Component" : 0.42745098039215684,
+        "Green Component" : 0.1568627450980392,
+        "Blue Component" : 0.8509803921568627,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       }
@@ -78,25 +78,25 @@
       "Use Separate Colors for Light and Dark Mode" : true,
       "Use Tab Color" : true,
       "Tab Color" : {
-        "Red Component" : 0.050980392156862744,
-        "Green Component" : 0.5803921568627451,
-        "Blue Component" : 0.5333333333333333,
+        "Red Component" : 0.058823529411764705,
+        "Green Component" : 0.4627450980392157,
+        "Blue Component" : 0.43137254901960786,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       },
       "Use Tab Color (Light)" : true,
       "Tab Color (Light)" : {
-        "Red Component" : 0.050980392156862744,
-        "Green Component" : 0.5803921568627451,
-        "Blue Component" : 0.5333333333333333,
+        "Red Component" : 0.058823529411764705,
+        "Green Component" : 0.4627450980392157,
+        "Blue Component" : 0.43137254901960786,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       },
       "Use Tab Color (Dark)" : true,
       "Tab Color (Dark)" : {
-        "Red Component" : 0.050980392156862744,
-        "Green Component" : 0.5803921568627451,
-        "Blue Component" : 0.5333333333333333,
+        "Red Component" : 0.058823529411764705,
+        "Green Component" : 0.4627450980392157,
+        "Blue Component" : 0.43137254901960786,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       }
@@ -113,25 +113,25 @@
       "Use Separate Colors for Light and Dark Mode" : true,
       "Use Tab Color" : true,
       "Tab Color" : {
-        "Red Component" : 0.050980392156862744,
-        "Green Component" : 0.5803921568627451,
-        "Blue Component" : 0.5333333333333333,
+        "Red Component" : 0.058823529411764705,
+        "Green Component" : 0.4627450980392157,
+        "Blue Component" : 0.43137254901960786,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       },
       "Use Tab Color (Light)" : true,
       "Tab Color (Light)" : {
-        "Red Component" : 0.050980392156862744,
-        "Green Component" : 0.5803921568627451,
-        "Blue Component" : 0.5333333333333333,
+        "Red Component" : 0.058823529411764705,
+        "Green Component" : 0.4627450980392157,
+        "Blue Component" : 0.43137254901960786,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       },
       "Use Tab Color (Dark)" : true,
       "Tab Color (Dark)" : {
-        "Red Component" : 0.050980392156862744,
-        "Green Component" : 0.5803921568627451,
-        "Blue Component" : 0.5333333333333333,
+        "Red Component" : 0.058823529411764705,
+        "Green Component" : 0.4627450980392157,
+        "Blue Component" : 0.43137254901960786,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       }
@@ -148,25 +148,25 @@
       "Use Separate Colors for Light and Dark Mode" : true,
       "Use Tab Color" : true,
       "Tab Color" : {
-        "Red Component" : 0.7607843137254902,
-        "Green Component" : 0.4392156862745098,
-        "Blue Component" : 0.6039215686274509,
+        "Red Component" : 0.5725490196078431,
+        "Green Component" : 0.27058823529411763,
+        "Blue Component" : 0.43137254901960786,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       },
       "Use Tab Color (Light)" : true,
       "Tab Color (Light)" : {
-        "Red Component" : 0.7607843137254902,
-        "Green Component" : 0.4392156862745098,
-        "Blue Component" : 0.6039215686274509,
+        "Red Component" : 0.5725490196078431,
+        "Green Component" : 0.27058823529411763,
+        "Blue Component" : 0.43137254901960786,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       },
       "Use Tab Color (Dark)" : true,
       "Tab Color (Dark)" : {
-        "Red Component" : 0.7607843137254902,
-        "Green Component" : 0.4392156862745098,
-        "Blue Component" : 0.6039215686274509,
+        "Red Component" : 0.5725490196078431,
+        "Green Component" : 0.27058823529411763,
+        "Blue Component" : 0.43137254901960786,
         "Alpha Component" : 1,
         "Color Space" : "sRGB"
       }
