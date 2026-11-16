@@ -210,11 +210,12 @@ if [[ $(uname -s) == Darwin ]]; then
 fi
 
 # ── symlink configs ───────────────────────────────────────────────────────────
-mkdir -p ~/.config/{starship,eza,atuin,shell}
+mkdir -p ~/.config/{starship,eza,atuin,shell,git}
 
 ln -sfn "$DOTFILES/config/shell/tools.zsh"         ~/.config/shell/tools.zsh
 ln -sfn "$DOTFILES/config/eza/theme.yml"            ~/.config/eza/theme.yml
 ln -sfn "$DOTFILES/config/atuin/config.toml"        ~/.config/atuin/config.toml
+ln -sfn "$DOTFILES/config/git/config"              ~/.config/git/config
 # Newer atuin installers (Linux) create ~/.atuin/config.toml, and once that
 # exists atuin reads it and ignores ~/.config/atuin entirely. Link ours there
 # too, keeping any generated file as a backup rather than discarding it.

@@ -120,6 +120,7 @@ config/
     theme.yml                 minimal shared base (colourful + file_type only)
     {server,cluster,gpu,cloud}.yml per-machine theme files (symlinking handled by bootstrap)
   atuin/config.toml
+  git/config                  shared git settings, linked to ~/.config/git/config; alias `git prune-merged`
 macos/                        macOS-only (Darwin); run from bootstrap.sh
   defaults.sh                 system preferences via `defaults write`
   dock.sh                     Dock behaviour + pinned-app layout (dockutil)

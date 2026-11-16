@@ -1,0 +1,6 @@
+# Git settings shared across machines; linked to ~/.config/git/config by bootstrap.sh.
+# Machine-local settings (credentials) stay in ~/.gitconfig, which git reads after this file.
+
+# git prune-merged: list local branches merged into the default branch (local or origin), ask, then delete them.
+[alias]
+	prune-merged = "!f() { base=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); base=${base#origin/}; if [ -z \"$base\" ]; then for b in main master; do if git show-ref -q --verify refs/heads/$b; then base=$b; break; fi; done; fi; [ -n \"$base\" ] || { echo \"No main or master branch found.\" >&2; return 1; }; into=$base; git show-ref -q --verify refs/remotes/origin/$base && into=\"$into origin/$base\"; branches=$(for r in $into; do git for-each-ref --merged=$r --format=\"%(refname:short)\" refs/heads; done | sort -u | grep -vxF -e \"$base\" -e \"$(git branch --show-current)\"); [ -n \"$branches\" ] || { echo \"No local branches merged into $base.\"; return 0; }; echo \"Local branches merged into $base:\"; echo \"$branches\" | sed \"s/^/  /\"; printf \"Delete them? [y/N] \"; read ans; case $ans in [yY]*) echo \"$branches\" | xargs git branch -D ;; *) echo \"Nothing deleted.\" ;; esac; }; f"
