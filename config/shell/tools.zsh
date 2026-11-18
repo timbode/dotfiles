@@ -135,6 +135,21 @@ if command -v starship &>/dev/null; then
     eval "$(starship init zsh)"
 fi
 
+# ── docs: serve a Julia package'"'"'s documentation on localhost ───────────────────
+# `docs QuicoptClient` (or `docs QuicoptClient.jl`) serves the docs of
+# ~/.julia/dev/QuicoptClient at http://localhost:8000, opens the browser, and
+# rebuilds the pages whenever a source or doc file is saved. Without an argument
+# it serves the package in the current directory; a second argument sets the
+# port, so two packages can run side by side. Needs LiveServer in the global
+# Julia environment and the package's docs/ environment instantiated.
+docs() {
+    local dir="${1:+$HOME/.julia/dev/${1%.jl}}"
+    dir="${dir:-$PWD}"
+    local port="${2:-8000}"
+    [[ -f "$dir/docs/make.jl" ]] || { echo "docs: no docs/make.jl in $dir" >&2; return 1; }
+    ( cd "$dir" && julia -e "using LiveServer; servedocs(doc_env=true, launch_browser=true, port=$port)" )
+}
+
 # ── iTerm tab colour on the Mac ───────────────────────────────────────────────
 # The SSH profiles in config/iterm/hosts.json carry their machine's colour, but
 # a plain new tab opens with iTerm's untracked Default profile and has none.

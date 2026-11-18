@@ -114,7 +114,7 @@ These live in the machine's own `~/.zshrc` and are not managed here:
 ```
 bootstrap.sh                  install script
 config/
-  shell/tools.zsh             sourced at the bottom of ~/.zshrc; sets EZA_COLORS per machine
+  shell/tools.zsh             sourced at the bottom of ~/.zshrc; sets EZA_COLORS per machine; `docs <pkg>` serves a Julia package's docs on localhost
   starship/{mac,server,cluster,gpu,cloud}.toml
   eza/
     theme.yml                 minimal shared base (colourful + file_type only)
